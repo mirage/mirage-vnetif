@@ -13,5 +13,5 @@ depends: [
   "lwt"
   "mirage-types"
   "cstruct"
-  "tcpip" 
+  "tcpip" { >= "2.3.0" }
 ]
