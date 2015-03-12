@@ -73,9 +73,8 @@ let server_ready, server_ready_u = Lwt.wait ()
 let server_done, server_done_u = Lwt.wait ()
 
 let write_and_check flow buf =
-    Printf.printf "in write...%!" ;
     S.T.write flow buf >>= function
-        | `Ok () -> Printf.printf "write returned%!"; Lwt.return_unit
+        | `Ok () -> Lwt.return_unit
         | `Eof -> S.T.close flow >> raise (Failure "EOF while writing to TCP flow")
         | `Error _ -> S.T.close flow >> raise (Failure "Error while writing to TCP flow")
 
@@ -119,7 +118,6 @@ let iperf c s flow =
   let t0 = Clock.time () in
   let st = {bytes=0L; packets=0L; bin_bytes=0L; bin_packets=0L; start_time = t0; last_time = t0} in
   let rec iperf_h flow =
-    Printf.printf "iperf_h-%!" ;
     match_lwt (S.T.read flow) with
     | `Error _ -> raise (Failure "Unknown error in server while reading")
     | `Eof ->
