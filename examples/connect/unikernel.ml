@@ -44,13 +44,16 @@ module Main (C: V1_LWT.CONSOLE) = struct
 
   let accept c flow =
     let ip, port = Stack.TCPV4.get_dest flow in
-    C.log_s c (green "Accepted connection from %s:%d" (Ipaddr.V4.to_string ip) port) >>= fun () ->
+    C.log_s c (green "Accepted connection from %s:%d%!" (Ipaddr.V4.to_string ip) port) >>= fun () ->
+    Stack.TCPV4.read flow >>= (function
+        | `Ok b -> C.log_s c (green "Got %s%!" (Cstruct.to_string b))
+        | `Eof | `Error _ -> C.log_s c (green "Error while reading%!")) >>= fun () ->
     Stack.TCPV4.close flow >>= fun () ->
-    C.log_s c (green "Connection closed")
+    C.log_s c (green "Connection closed%!")
 
   let create_stack c backend ip =
     or_error "backend" Stack.V.connect backend >>= fun netif ->
-    C.log_s c (blue "Connected to backend with mac %s" (Macaddr.to_string (Stack.V.mac netif))) >>= fun () ->
+    C.log_s c (blue "Connected to backend with mac %s%!" (Macaddr.to_string (Stack.V.mac netif))) >>= fun () ->
     or_error "ethif" Stack.E.connect netif >>= fun ethif ->
     or_error "ipv4" Stack.I.connect ethif >>= fun ipv4 ->
     or_error "udpv4" Stack.U.connect ipv4 >>= fun udpv4 ->
@@ -65,7 +68,7 @@ module Main (C: V1_LWT.CONSOLE) = struct
   
   let start c =
     let backend = Stack.B.create in
-    Lwt.choose [
+    Lwt.join [
         (create_stack c backend "192.168.56.99" >>= fun s1 ->
         Stack.listen_tcpv4 s1 ~port:80 (fun f -> accept c f);
         Stack.listen s1) ;
@@ -73,7 +76,11 @@ module Main (C: V1_LWT.CONSOLE) = struct
         (OS.Time.sleep 3.0 >>= fun () ->
         create_stack c backend "192.168.56.98" >>= fun s2 ->
         or_error "connect" (Stack.TCPV4.create_connection (Stack.tcpv4 s2)) ((Ipaddr.V4.of_string_exn "192.168.56.99"), 80) >>= fun flow ->
-        C.log_s c (yellow "Connected to other end.. closing") >>= fun () ->
+        C.log_s c (yellow "Connected to other end...%!") >>= fun () ->
+        Stack.TCPV4.write flow (Cstruct.of_string "hello world 1 2 3 4 5") >>= (function
+            | `Ok () -> C.log_s c (yellow  "wrote hello world%!")
+            | `Error _ -> C.log_s c (yellow "tried to write, got error%!")
+            | `Eof -> C.log_s c (yellow "tried to write, got eof%!")) >>= fun () ->
         Stack.TCPV4.close flow >>= fun () ->
         Lwt.return_unit) ]
 
