@@ -1,0 +1,2 @@
+PKG mirage-vnetif mirage-console mirage-xen xen-evtchn xen-gnt xenstore
+REC
