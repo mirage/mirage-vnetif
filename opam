@@ -7,7 +7,7 @@ build: [
 ]
 install: [make "install"]
 remove: [
-  ["ocamlfind" "remove" "irmin"]
+  ["ocamlfind" "remove" "mirage-vnetif"]
 ]
 depends: [ 
   "lwt"
