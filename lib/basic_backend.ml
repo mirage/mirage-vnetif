@@ -23,8 +23,8 @@ module Make = struct
 
     type t = {
         mutable last_id : int;
-    listeners : (int, buffer -> unit io) Hashtbl.t;
-    macs : (int, macaddr) Hashtbl.t;
+        listeners : (int, buffer -> unit io) Hashtbl.t;
+        macs : (int, macaddr) Hashtbl.t;
     }
 
     let make_mac id =
@@ -54,11 +54,19 @@ module Make = struct
         Hashtbl.replace t.listeners id fn
 
     let write t id buffer =
-        let send src dst fn =
-            if src != dst then
-                Lwt.ignore_result (fn buffer)
+        let keys = 
+            Hashtbl.fold (fun k v lst -> k::lst) t [] 
         in
-    Hashtbl.iter (send id) t.listeners;
-    Lwt.return_unit
+        let send t buffer src dst =
+            if src != dst then
+                let fn = (Hashtbl.find t dst) in
+                    fn buffer
+            else
+                Lwt.return_unit
+        in
+        (Lwt_list.iter_s (send t buffer id) keys)
+
+    (*Hashtbl.iter (send id) t.listeners;
+    Lwt.return_unit*)
 
 end
