@@ -64,12 +64,12 @@ module Make = struct
             if src != dst then
             begin
                 t.call_counter <- t.call_counter + 1;
-                let call_counter = t.call_counter in
+                (*let call_counter = t.call_counter in*)
                 let fn = (Hashtbl.find t.listeners dst) in
                     Lwt.async (fun f -> 
-                        Printf.printf "Bridge: Calling fn %d -> %d (%d,len=%d)\n%!" src dst call_counter (String.length buffer);
+                        (*Printf.printf "Bridge: Calling fn %d -> %d (%d,len=%d)\n%!" src dst call_counter (String.length buffer);*)
                         fn (Cstruct.of_string buffer) >>= fun () ->
-                        Printf.printf "Bridge: Exit from fn %d -> %d (%d)\n%!" src dst call_counter; 
+                        (*Printf.printf "Bridge: Exit from fn %d -> %d (%d)\n%!" src dst call_counter; *)
                         Lwt.return_unit);
                     Lwt.return_unit
             end else
