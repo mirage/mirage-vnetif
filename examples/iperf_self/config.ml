@@ -1,6 +1,6 @@
 open Mirage
 
-let main = foreign "Unikernel.Main" (console @-> job)
+let main = foreign "Iperf_self.Main" (console @-> job)
 
 let platform =
     match get_mode () with

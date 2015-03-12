@@ -27,6 +27,7 @@ module type BACKEND = sig
     val unregister : t -> id -> unit io
     val mac : t -> id -> macaddr
     val write : t -> id -> buffer -> unit io
+    val writev : t -> id -> buffer list -> unit io
     val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
 end
 
@@ -75,7 +76,10 @@ module Make (B : BACKEND) = struct
     B.write t.backend t.id buffer
 
   let writev t buffers = 
-    Lwt_list.iter_s (fun f -> write t f) buffers
+    let total_len = (List.fold_left (fun a b -> a + (Cstruct.len b)) 0 buffers) in
+    t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int total_len);
+    t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts; (* assembled to single packet *)
+    B.writev t.backend t.id buffers
 
   let listen t fn =
     let listener t fn buf =

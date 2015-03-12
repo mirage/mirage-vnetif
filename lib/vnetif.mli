@@ -27,6 +27,7 @@ module type BACKEND = sig
     val unregister : t -> id -> unit io
     val mac : t -> id -> macaddr
     val write : t -> id -> buffer -> unit io
+    val writev : t -> id -> buffer list -> unit io
     val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
 end
 
