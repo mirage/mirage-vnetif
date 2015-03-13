@@ -56,7 +56,13 @@ module Make = struct
     let set_listen_fn t id fn =
         Hashtbl.replace t.listeners id fn
 
-    let write_bytes t id buffer =
+    let buffer_copy src =
+        let len = Cstruct.len src in
+        let dst = Cstruct.create len in
+        Cstruct.blit src 0 dst 0 len;
+        dst
+
+    let write_copy t id buffer =
         let keys = 
             Hashtbl.fold (fun k v lst -> k::lst) t.listeners [] 
         in
@@ -68,9 +74,9 @@ module Make = struct
                 let fn = (Hashtbl.find t.listeners dst) in
                     Lwt.async (fun f -> 
                         (*Printf.printf "Bridge: Calling fn %d -> %d (%d,len=%d)\n%!" src dst call_counter (String.length buffer);*)
-                        fn (Cstruct.of_string buffer) >>= fun () ->
-                        (*Printf.printf "Bridge: Exit from fn %d -> %d (%d)\n%!" src dst call_counter; *)
-                        Lwt.return_unit);
+                        fn (buffer_copy buffer)
+                        (*Printf.printf "Bridge: Exit from fn %d -> %d (%d)\n%!" src dst call_counter;
+                        Lwt.return_unit*));
                     Lwt.return_unit
             end else
                 Lwt.return_unit
@@ -78,7 +84,7 @@ module Make = struct
         (Lwt_list.iter_s (send t id) keys)
 
     let write t id buffer =
-        write_bytes t id (Cstruct.to_string buffer)
+        write_copy t id buffer
 
     let writev t id buffers =
         (* assemble list of buffers into one buffer before sending *)
@@ -90,7 +96,7 @@ module Make = struct
                                             current_pos + part_len) 0 buffers 
         in
         assert(check_len == total_len);
-        write t id total_buf
+        write_copy t id total_buf
 
 end
 
