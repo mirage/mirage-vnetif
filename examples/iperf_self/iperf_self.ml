@@ -100,7 +100,7 @@ let iperfclient c s dest_ip dport =
    C.log_s c (Printf.sprintf "Iperf client: Attempting connection.%!") >>= fun () ->
    tcp_connect (S.tcpv4 s) (dest_ip, dport) >>= fun flow ->
    iperftx flow >>= fun () ->
-   C.log_s c (Printf.sprintf "Iperf client: Done.\n%!")
+   C.log_s c (Printf.sprintf "Iperf client: Done.%!")
 
 let print_data c st ts_now = 
   C.log_s c (Printf.sprintf "Iperf server: t = %f, rate = %Ld KBits/s, totbytes = %Ld, live_words = %d%!"
@@ -114,7 +114,7 @@ let print_data c st ts_now =
 
 
 let iperf c s flow =
-  C.log_s c (Printf.sprintf "Iperf server: Received connection.\n%!") >>= fun () ->
+  C.log_s c (Printf.sprintf "Iperf server: Received connection.%!") >>= fun () ->
   let t0 = Clock.time () in
   let st = {bytes=0L; packets=0L; bin_bytes=0L; bin_packets=0L; start_time = t0; last_time = t0} in
   let rec iperf_h flow =
@@ -127,7 +127,7 @@ let iperf c s flow =
         st.last_time <- st.start_time;
         print_data c st ts_now >>= fun () ->
         S.T.close flow >>= fun () ->
-        C.log_s c "Iperf server: Done - closed connection. \n%!"
+        C.log_s c "Iperf server: Done - closed connection."
     | `Ok data -> begin
         let l = Cstruct.len data in
         st.bytes <- (Int64.add st.bytes (Int64.of_int l));
@@ -164,7 +164,7 @@ let start c =
     create_stack c backend ip_config_server >>= fun server_s ->
     create_stack c backend ip_config_client >>= fun client_s ->
 
-    Lwt.join [
+    Lwt.choose [
         (server_ready >>= fun () ->
          OS.Time.sleep 1.0 >>= fun() ->
          C.log_s c (Printf.sprintf "I am client with IP %s, trying to connect to server @ %s:%d" (Ipaddr.V4.to_string ip_client) (Ipaddr.V4.to_string ip_server) port) >>= fun () ->
@@ -177,42 +177,5 @@ let start c =
     C.log_s c "Waiting for server_done..." >>= fun () ->
     server_done >>= fun () ->
     Lwt.return_unit (* exit cleanly *)
-    
-    (*let mgr_th =  Net.Manager.create (fun mgr interface id ->
-
-    let first, second = match Net.Manager.get_intfs mgr with
-    | [] | [_] -> failwith "iperf_self requires at least 2 network interfaces, exiting."
-    | h::t  -> fst h, fst (List.hd t) in
-    match id with
-    | id when id = second -> (* client *)
-	OS.Time.sleep 1.0 >> 
-	Net.Manager.configure interface ip1 >>
-	(
-	 server_ready >>
-	 let () = printf "Setting up iperf client on interface %s\n%!" (OS.Netif.string_of_id id) in
-	 let src_ip = Net.Manager.get_intf_ipv4addr mgr first in
-	 let dest_ip = Net.Manager.get_intf_ipv4addr mgr second in
-	 let src_ip_str = Ipaddr.V4.to_string src_ip in
-	 let dest_ip_str = Ipaddr.V4.to_string dest_ip in
-	 OS.Console.log (Printf.sprintf "I have IP %s, trying to connect to %s" src_ip_str dest_ip_str);
-	 iperfclient mgr src_ip dest_ip port
-	)
-    | id when id = first -> (* server *)
-	OS.Time.sleep 1.0 >> 
-	Net.Manager.configure interface ip2 >>
-	(
-	 printf "Setting up iperf server on interface %s port %d\n%!" (OS.Netif.string_of_id id) port;
-	 let _ = Net.Flow.listen mgr (`TCPv4 ((None, port), iperf)) in
-	 printf "Done setting up server \n%!";
-	 Lwt.wakeup server_ready_u ();
-	 return_unit
-	)
-    | _ ->
-	(printf "interface %s not used\n%!" (OS.Netif.string_of_id id); return_unit)
-  ) in
-  server_done >>
-  (Lwt.cancel mgr_th;
-   return_unit
-  ) *)
 
 end
