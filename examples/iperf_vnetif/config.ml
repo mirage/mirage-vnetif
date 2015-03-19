@@ -1,7 +1,6 @@
 open Mirage
 
 let main = foreign "Iperf_vnetif.Main" (console @-> job)
-let tracing = mprof_trace ~size:1000000 ()
 let platform =
     match get_mode () with
         | `Xen -> "xen"
@@ -15,6 +14,6 @@ let () =
         "mirage-clock-" ^ platform;
         "tcpip.stack-direct" ; 
         "mirage-types" ];
-  register "unikernel" ~tracing [
+  register "unikernel"  [
     main $ default_console
   ]

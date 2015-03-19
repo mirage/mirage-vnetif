@@ -102,7 +102,7 @@ let iperf c s =
       enough_data ] (* wait for client *)
 
 let start c =
-    let backend = B.create in
+    let backend = (B.create ~use_async_readers:false ()) in
     create_stack c backend >>= fun server_s ->
     create_stack c backend >>= fun client_s ->
 
