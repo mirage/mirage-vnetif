@@ -83,9 +83,9 @@ module Make = struct
             begin
                 t.call_counter <- t.call_counter + 1;
                 let fn = (Hashtbl.find t.listeners dst) in
-                Lwt.async (fun f -> fn (buffer_copy buffer));
-            end;
-            Lwt.return_unit
+                t.listener_callback fn (buffer_copy buffer)
+            end else
+                Lwt.return_unit
         in
         (Lwt_list.iter_p (send t id) keys) >>= fun () ->
         if t.use_async_readers then
