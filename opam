@@ -18,5 +18,7 @@ depends: [
   "lwt"
   "mirage-types"
   "cstruct"
-  "tcpip" { >= "2.3.0" }
+  "ipaddr"
+  "io-page"
+  "mirage-profile"
 ]

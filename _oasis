@@ -10,5 +10,5 @@ BuildTools:  ocamlbuild
 Library "mirage-vnetif"
   Path:              lib/
   Findlibname:       mirage-vnetif
-  BuildDepends:      cstruct, lwt, mirage-types, tcpip
+  BuildDepends:      cstruct, lwt, mirage-types, ipaddr, mirage-profile, io-page
   Modules:           Vnetif, Basic_backend
