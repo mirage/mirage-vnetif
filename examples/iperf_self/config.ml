@@ -8,6 +8,13 @@ let platform =
         | _ -> "unix"
 
 let () =
+    add_to_opam_packages [
+        "mirage-vnetif" ;
+        "mirage-net-" ^ platform;
+        "mirage-clock-" ^ platform;
+        "mirage-" ^ platform;
+        "mirage-types" ;
+        "tcpip" ];
     add_to_ocamlfind_libraries [ 
         "mirage-vnetif" ; 
         "mirage-net-" ^ platform ; 

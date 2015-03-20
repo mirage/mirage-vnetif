@@ -12,7 +12,6 @@ let () =
         "mirage-net-" ^ platform ; 
         "mirage-" ^ platform; 
         "mirage-clock-" ^ platform;
-        "tcpip.stack-direct" ; 
         "mirage-types" ];
   register "unikernel"  [
     main $ default_console
