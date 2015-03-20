@@ -87,11 +87,7 @@ module Make = struct
             end else
                 Lwt.return_unit
         in
-        (Lwt_list.iter_p (send t id) keys) >>= fun () ->
-        if t.use_async_readers then
-            Lwt.pause () (* yield to other threads *)
-        else
-            Lwt.return_unit
+        Lwt_list.iter_p (send t id) keys
 
     let write t id buffer =
         write_copy t id buffer
