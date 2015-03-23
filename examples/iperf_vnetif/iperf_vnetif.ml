@@ -37,53 +37,53 @@ module Main (C : V1_LWT.CONSOLE) = struct
     C.log_s c (Printf.sprintf "Connected to backend with mac %s" (Macaddr.to_string (V.mac netif))) >>= fun () ->
     Lwt.return netif
 
-type stats = {
-  mutable bytes: int64;
-  mutable packets: int64;
-  mutable bin_bytes:int64;
-  mutable bin_packets: int64;
-  mutable start_time: float;
-  mutable last_time: float;
-}
+  type stats = {
+    mutable bytes: int64;
+    mutable packets: int64;
+    mutable bin_bytes:int64;
+    mutable bin_packets: int64;
+    mutable start_time: float;
+    mutable last_time: float;
+  }
+  
+  let msg = "01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890"
+  
+  let mlen = String.length msg
 
-let msg = "01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890"
+  let total_len = 5000000000
 
-let mlen = String.length msg
+  let server_ready, server_ready_u = Lwt.wait ()
+  let client_done, client_done_u = Lwt.wait ()
 
-let total_len = 1000000000
+  let iperfclient c s =
+    C.log_s c (Printf.sprintf "Iperf client: Sending data to server by calling vnetif.write.%!") >>= fun () ->
+    let a = Cstruct.sub (Io_page.(to_cstruct (get 1))) 0 mlen in
+    Cstruct.blit_from_string msg 0 a 0 mlen;
+    let amt = total_len in
+    for_lwt i = (amt / mlen) downto 1 do
+        V.write s a 
+    done >>= fun () ->
+    let a = Cstruct.sub a 0 (amt - (mlen * (amt/mlen))) in
+    V.write s a >>= fun () ->
+    C.log_s c (Printf.sprintf "Iperf client: Done.%!")
 
-let server_ready, server_ready_u = Lwt.wait ()
-let client_done, client_done_u = Lwt.wait ()
-
-let iperfclient c s =
-  C.log_s c (Printf.sprintf "Iperf client: Sending data to server by calling vnetif.write.%!") >>= fun () ->
-  let a = Cstruct.sub (Io_page.(to_cstruct (get 1))) 0 mlen in
-  Cstruct.blit_from_string msg 0 a 0 mlen;
-  let amt = total_len in
-  for_lwt i = (amt / mlen) downto 1 do
-      V.write s a 
-  done >>= fun () ->
-  let a = Cstruct.sub a 0 (amt - (mlen * (amt/mlen))) in
-  V.write s a >>= fun () ->
-  C.log_s c (Printf.sprintf "Iperf client: Done.%!")
-
-let print_data c st ts_now = 
-  C.log_s c (Printf.sprintf "Iperf server: t = %f, rate = %Ld KBits/s, totbytes = %Ld, live_words = %d%!"
-    (ts_now -. st.start_time)
-    (Int64.of_float (((Int64.to_float st.bin_bytes) /. (ts_now -. st.last_time)) /. 125.))
+  let print_data c st ts_now = 
+    C.log_s c (Printf.sprintf "Iperf server: t = %f, rate = %Ld KBits/s, totbytes = %Ld, live_words = %d%!"
+      (ts_now -. st.start_time)
+      (Int64.of_float (((Int64.to_float st.bin_bytes) /. (ts_now -. st.last_time)) /. 125.))
     st.bytes Gc.((stat()).live_words)) >>= fun () ->
-  st.last_time <- ts_now;
-  st.bin_bytes <- 0L;
-  st.bin_packets <- 0L;
-  Lwt.return_unit
+    st.last_time <- ts_now;
+    st.bin_bytes <- 0L;
+    st.bin_packets <- 0L;
+    Lwt.return_unit
 
-let iperf c s =
-  C.log_s c (Printf.sprintf "Iperf server: Ready to receive data.%!") >>= fun () ->
+  let iperf c s =
+    C.log_s c (Printf.sprintf "Iperf server: Ready to receive data.%!") >>= fun () ->
       Lwt.wakeup server_ready_u ();
-  let t0 = Clock.time () in
-  let st = {bytes=0L; packets=0L; bin_bytes=0L; bin_packets=0L; start_time = t0; last_time = t0} in
-  let enough_data, enough_data_waker = Lwt.wait () in
-  Lwt.choose [
+    let t0 = Clock.time () in
+    let st = {bytes=0L; packets=0L; bin_bytes=0L; bin_packets=0L; start_time = t0; last_time = t0} in
+    let enough_data, enough_data_waker = Lwt.wait () in
+    Lwt.choose [
        V.listen s (fun data -> 
             let l = Cstruct.len data in
             st.bytes <- (Int64.add st.bytes (Int64.of_int l));
@@ -101,7 +101,7 @@ let iperf c s =
       ;
       enough_data ] (* wait for client *)
 
-let start c =
+  let start c =
     let backend = (B.create ~use_async_readers:false ()) in
     create_stack c backend >>= fun server_s ->
     create_stack c backend >>= fun client_s ->
