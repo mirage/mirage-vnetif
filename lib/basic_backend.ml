@@ -26,6 +26,7 @@ module Make = struct
         mutable last_id : int;
         mutable call_counter : int;
         use_async_readers : bool;
+        yield : (unit -> unit io);
         listener_callback : ((buffer -> unit io) -> buffer -> unit io);
         listeners : (int, buffer -> unit io) Hashtbl.t;
         macs : (int, macaddr) Hashtbl.t;
@@ -36,12 +37,13 @@ module Make = struct
         let base_mac = [| 0 ; 0x50 ; 0x2a ; 0x16 ; 0x6d ; id |] in
         Macaddr.make_local (Array.get base_mac)
 
-    let create ?(use_async_readers=false) () =
+    let create ?(yield=(fun () -> Lwt.pause ())) ?(use_async_readers=false) () =
         if use_async_readers then
             {last_id = 0; 
              call_counter = 0;
              listeners = Hashtbl.create 7; 
              macs = Hashtbl.create 7;
+             yield;
              use_async_readers;
              listener_callback = (fun f buffer -> Lwt.async (fun () -> f buffer); Lwt.return_unit)}
         else
@@ -49,6 +51,7 @@ module Make = struct
              call_counter = 0;
              listeners = Hashtbl.create 7; 
              macs = Hashtbl.create 7;
+             yield;
              use_async_readers;
              listener_callback = (fun f buffer -> (f buffer))}
 
@@ -87,7 +90,8 @@ module Make = struct
             end else
                 Lwt.return_unit
         in
-        Lwt_list.iter_p (send t id) keys
+        Lwt_list.iter_s (send t id) keys >>= fun () ->
+        t.yield ()
 
     let write t id buffer =
         write_copy t id buffer

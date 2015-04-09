@@ -22,7 +22,7 @@ module Make : sig
     type t
     type error = [ `Unknown of string | `Disconnected | `Unimplemented ]
 
-    val create : ?use_async_readers:bool -> unit -> t
+    val create : ?yield:(unit -> unit io) -> ?use_async_readers:bool -> unit -> t
     val register : t -> [ `Ok of id | `Error of error ]
     val unregister : t -> id -> unit io
     val mac : t -> id -> macaddr
