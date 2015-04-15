@@ -160,7 +160,7 @@ module Main (C : V1_LWT.CONSOLE) = struct
       [Ipaddr.V4.of_string_exn "10.0.0.1"]
     ) in
     let port = 5001 in
-    let backend = (S.B.create ~use_async_readers:true ()) in
+    let backend = (S.B.create ~yield:(fun () -> OS.Time.sleep 0.0) ~use_async_readers:true ()) in
     create_stack c backend ip_config_server >>= fun server_s ->
     create_stack c backend ip_config_client >>= fun client_s ->
 
