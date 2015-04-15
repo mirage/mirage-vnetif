@@ -67,8 +67,8 @@ module Main (C: V1_LWT.CONSOLE) = struct
     or_error "stack" (Stack.connect config ethif ipv4 udpv4) tcpv4
   
   let start c =
-    let backend = Stack.B.create () in
-    Lwt.join [
+    let backend = Stack.B.create ~use_async_readers:true ~yield:(fun() -> OS.Time.sleep 0.0) () in (* use_async_readers must be true with tcpip *)
+    Lwt.pick [
         (create_stack c backend "192.168.56.99" >>= fun s1 ->
         Stack.listen_tcpv4 s1 ~port:80 (fun f -> accept c f);
         Stack.listen s1) ;
@@ -82,6 +82,7 @@ module Main (C: V1_LWT.CONSOLE) = struct
             | `Error _ -> C.log_s c (yellow "tried to write, got error%!")
             | `Eof -> C.log_s c (yellow "tried to write, got eof%!")) >>= fun () ->
         Stack.TCPV4.close flow >>= fun () ->
-        Lwt.return_unit) ]
+        Lwt.return_unit) ] >>= fun () ->
+    Lwt.return_unit
 
 end
