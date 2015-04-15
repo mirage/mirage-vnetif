@@ -67,7 +67,7 @@ module Main (C: V1_LWT.CONSOLE) = struct
     or_error "stack" (Stack.connect config ethif ipv4 udpv4) tcpv4
   
   let start c =
-    let backend = Stack.B.create in
+    let backend = Stack.B.create () in
     Lwt.join [
         (create_stack c backend "192.168.56.99" >>= fun s1 ->
         Stack.listen_tcpv4 s1 ~port:80 (fun f -> accept c f);
