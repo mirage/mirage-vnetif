@@ -1,6 +1,5 @@
 opam-version: "1.2"
 name: "mirage-vnetif"
-version: "0.1"
 maintainer: "Magnus Skjegstad <magnus@skjegstad.com>"
 authors: "Magnus Skjegstad <magnus@skjegstad.com>"
 homepage: "https://github.com/MagnusS/mirage-vnetif"
