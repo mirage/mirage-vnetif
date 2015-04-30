@@ -38,7 +38,6 @@ let or_error name fn t =
 
 let create_stack c backend ip netmask gw =
     or_error "backend" S.V.connect backend >>= fun netif ->
-    (* Printf.printf (Printf.sprintf "Connected to backend with mac %s" (Macaddr.to_string (S.V.mac netif))) *)
     or_error "ethif" S.E.connect netif >>= fun ethif ->
     or_error "ipv4" S.I.connect ethif >>= fun ipv4 ->
     or_error "udpv4" S.U.connect ipv4 >>= fun udpv4 ->
@@ -54,14 +53,17 @@ let create_stack c backend ip netmask gw =
 ```
 
 
-We can now create multiple stacks that talk over the same backend. `Basic_backend.create` accepts two optional paremeters. `use_async_readers` makes the `write` calls non-blocking. This is necessary to use Vnetif with the Mirage TCP/IP stack. `yield` specifies the yield function to use in non-blocking mode. In a unikernel this is typically `OS.Time.sleep 0.0`, but in a Unix process `Lwt_main.yield ()` can be used instead.
+We can now create multiple stacks that talk over the same backend. `Basic_backend.create` accepts two optional parameters:
+- `use_async_readers` makes the `write` calls non-blocking. This is necessary to use Vnetif with the Mirage TCP/IP stack. 
+- `yield` specifies the yield function to use in non-blocking mode. In a unikernel this is typically `OS.Time.sleep 0.0`, but in a Unix process `Lwt_main.yield ()` can be used instead.
 
 ```ocaml
 
 let () =
 
     (* create async backend with OS.Time.sleep 0.0 as yield *)
-    let backend = Basic_backend.create ~use_async_readers:true ~yield:(fun() -> OS.Time.sleep 0.0 ) () in
+    let backend = Basic_backend.create ~use_async_readers:true 
+        ~yield:(fun() -> OS.Time.sleep 0.0 ) () in
 
     let netmask = Ipaddr.V4.of_string_exn "255.255.255.0"  in
     let gw = Ipaddr.V4.of_string_exn "10.0.0.1" in
