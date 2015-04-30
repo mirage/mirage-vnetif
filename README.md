@@ -6,8 +6,9 @@ Provides the module `Vnetif` which can be used as a replacement for the regular 
 An example of a unikernel that communicates with itself over `Vnetif` can be seen [here](https://github.com/MagnusS/mirage-vnetif/blob/master/examples/connect/unikernel.ml). An iperf-like performance test is available [here](https://github.com/MagnusS/mirage-vnetif/tree/master/examples/iperf_self). The examples can be compiled for Unix and Xen and do not need access to a real network interface.
 
 ## Install
+
 ```
-opam pin add mirage-vnetif https://github.com/MagnusS/mirage-vnetif.git
+opam install mirage-vnetif
 ```
 
 ## Getting started
