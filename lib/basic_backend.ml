@@ -33,8 +33,9 @@ module Make = struct
     }
 
     let make_mac id =
-        (* TODO Do something more clever here.*)
-        let base_mac = [| 0 ; 0x50 ; 0x2a ; 0x16 ; 0x6d ; id |] in
+        let i = Int32.of_int id in
+        let byte v shr = Int32.to_int (Int32.logand (Int32.shift_right_logical v shr) 0xFFl) in
+        let base_mac = [| 0 ; 0x50 ; (byte i 24) ; (byte i 16) ; (byte i 8) ; (byte i 0) |] in (* TODO Use different prefix? *)
         Macaddr.make_local (Array.get base_mac)
 
     let create ?(yield=(fun () -> Lwt.pause ())) ?(use_async_readers=false) () =
