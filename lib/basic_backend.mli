@@ -24,9 +24,18 @@ module Make : sig
 
     val create : ?yield:(unit -> unit io) -> ?use_async_readers:bool -> unit -> t
     val register : t -> [ `Ok of id | `Error of error ]
+
+    (** Unregister the listener and callback function *)
     val unregister : t -> id -> unit io
+
+    (** Unregister the listener, then block until all callbacks return for this
+     * id. Useful when listeners are called in async. *)
+    val unregister_and_flush : t -> id -> unit io
+
     val mac : t -> id -> macaddr
     val write : t -> id -> buffer -> unit io
     val writev : t -> id -> buffer list -> unit io
     val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
+
+
 end

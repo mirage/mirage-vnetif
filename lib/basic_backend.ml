@@ -22,12 +22,19 @@ module Make = struct
     type macaddr = Macaddr.t
     type error = [ `Unknown of string | `Disconnected | `Unimplemented ]
 
+    type c = {
+        mutable callback_counter : int;
+        cond : int Lwt_condition.t;
+        mutex : Lwt_mutex.t;
+    }
+
     type t = {
         mutable last_id : int;
         mutable call_counter : int;
         use_async_readers : bool;
         yield : (unit -> unit io);
-        listener_callback : ((buffer -> unit io) -> buffer -> unit io);
+        listener_callback : ((buffer -> unit io) -> c -> buffer -> unit io);
+        listener_callbacks_in_progress : (int, c) Hashtbl.t;
         listeners : (int, buffer -> unit io) Hashtbl.t;
         macs : (int, macaddr) Hashtbl.t;
     }
@@ -38,33 +45,81 @@ module Make = struct
         let base_mac = [| 0 ; 0x50 ; (byte i 24) ; (byte i 16) ; (byte i 8) ; (byte i 0) |] in (* TODO Use different prefix? *)
         Macaddr.make_local (Array.get base_mac)
 
+    let dec_callback_counter c =
+        Lwt_mutex.with_lock c.mutex (
+            fun () -> (c.callback_counter <- c.callback_counter - 1);
+            Lwt.return_unit
+        ) >>= fun () ->
+        Lwt.return (Lwt_condition.signal c.cond 0)
+
+    let inc_callback_counter c =
+        Lwt_mutex.with_lock c.mutex (
+            fun () -> (c.callback_counter <- c.callback_counter + 1);
+                      Lwt.return_unit
+        ) >>= fun () ->
+        Lwt.return (Lwt_condition.signal c.cond 0)
+
     let create ?(yield=(fun () -> Lwt.pause ())) ?(use_async_readers=false) () =
         if use_async_readers then
+            let listener_callback f c buffer =
+                inc_callback_counter c >>= fun () ->
+                Lwt.async (fun () -> 
+                    f buffer >>= fun () -> 
+                    dec_callback_counter c); 
+                Lwt.return_unit
+            in
             {last_id = 0; 
              call_counter = 0;
              listeners = Hashtbl.create 7; 
              macs = Hashtbl.create 7;
+             listener_callbacks_in_progress = Hashtbl.create 7;
              yield;
              use_async_readers;
-             listener_callback = (fun f buffer -> Lwt.async (fun () -> f buffer); Lwt.return_unit)}
+             listener_callback}
         else
+            let listener_callback f c buffer =
+                inc_callback_counter c >>= fun () ->
+                f buffer >>= fun () -> 
+                dec_callback_counter c
+            in
             {last_id = 0; 
              call_counter = 0;
              listeners = Hashtbl.create 7; 
              macs = Hashtbl.create 7;
+             listener_callbacks_in_progress = Hashtbl.create 7;
              yield;
              use_async_readers;
-             listener_callback = (fun f buffer -> (f buffer))}
+             listener_callback}
 
     let register t =
         t.last_id <- t.last_id + 1;
         Hashtbl.add t.macs t.last_id (make_mac t.last_id);
+        Hashtbl.add t.listener_callbacks_in_progress t.last_id {
+            callback_counter = 0; 
+            cond = Lwt_condition.create(); 
+            mutex = Lwt_mutex.create() };
         (`Ok t.last_id)
 
     let unregister t id =
         Hashtbl.remove t.macs id;
         Hashtbl.remove t.listeners id;
+        Hashtbl.remove t.listener_callbacks_in_progress id;
         Lwt.return_unit
+
+    let wait_for_callbacks c =
+        Lwt_mutex.with_lock c.mutex (fun () -> 
+            let rec loop = function
+                | 0 -> Lwt.return_unit
+                | _ -> (Lwt_condition.wait ~mutex:c.mutex c.cond >>= fun _ ->
+                       (loop c.callback_counter))
+            in
+            loop c.callback_counter
+        )
+
+    let unregister_and_flush t id =
+        let c = Hashtbl.find t.listener_callbacks_in_progress id in
+        unregister t id >>= fun () ->
+        wait_for_callbacks c
 
     let mac t id =
         Hashtbl.find t.macs id
@@ -87,7 +142,8 @@ module Make = struct
             begin
                 t.call_counter <- t.call_counter + 1;
                 let fn = (Hashtbl.find t.listeners dst) in
-                t.listener_callback fn (buffer_copy buffer)
+                let c = (Hashtbl.find t.listener_callbacks_in_progress dst) in
+                t.listener_callback fn c (buffer_copy buffer)
             end else
                 Lwt.return_unit
         in
