@@ -29,6 +29,7 @@ module type BACKEND = sig
     val write : t -> id -> buffer -> unit io
     val writev : t -> id -> buffer list -> unit io
     val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
+    val unregister_and_flush : t -> id -> unit io
 end
 
 module Make (B : BACKEND) = struct
