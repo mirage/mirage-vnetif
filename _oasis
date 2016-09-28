@@ -1,7 +1,7 @@
 OASISFormat: 0.4
 Name:        mirage-vnetif
-Version:     0.1
 Synopsis:    Virtual Netif and software bridge for Mirage
+Version:     0.1
 Authors:     Magnus Skjegstad
 License:     ISC
 Plugins:     META (0.3), DevFiles (0.3)
@@ -10,5 +10,5 @@ BuildTools:  ocamlbuild
 Library "mirage-vnetif"
   Path:              lib/
   Findlibname:       mirage-vnetif
-  BuildDepends:      cstruct, lwt, mirage-types, ipaddr, mirage-profile, io-page
-  Modules:           Vnetif, Basic_backend
+  BuildDepends:      cstruct, lwt, mirage-types, ipaddr, mirage-profile, io-page, duration
+  Modules:           Vnetif, Basic_backend, Delayed_backend

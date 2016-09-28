@@ -60,6 +60,11 @@ module Make = struct
         Lwt.return (Lwt_condition.signal c.cond 0)
 
     let create ?(yield=(fun () -> Lwt.pause ())) ?(use_async_readers=false) () =
+        let last_id = 0 in
+        let call_counter = 0 in
+        let listeners = Hashtbl.create 7 in
+        let macs = Hashtbl.create 7 in
+        let listener_callbacks_in_progress = Hashtbl.create 7 in
         if use_async_readers then
             let listener_callback f c buffer =
                 inc_callback_counter c >>= fun () ->
@@ -68,28 +73,14 @@ module Make = struct
                     dec_callback_counter c); 
                 Lwt.return_unit
             in
-            {last_id = 0; 
-             call_counter = 0;
-             listeners = Hashtbl.create 7; 
-             macs = Hashtbl.create 7;
-             listener_callbacks_in_progress = Hashtbl.create 7;
-             yield;
-             use_async_readers;
-             listener_callback}
+            {last_id;call_counter;listeners;macs;listener_callbacks_in_progress;yield;use_async_readers;listener_callback}
         else
             let listener_callback f c buffer =
                 inc_callback_counter c >>= fun () ->
                 f buffer >>= fun () -> 
                 dec_callback_counter c
             in
-            {last_id = 0; 
-             call_counter = 0;
-             listeners = Hashtbl.create 7; 
-             macs = Hashtbl.create 7;
-             listener_callbacks_in_progress = Hashtbl.create 7;
-             yield;
-             use_async_readers;
-             listener_callback}
+            {last_id;call_counter;listeners;macs;listener_callbacks_in_progress;yield;use_async_readers;listener_callback}
 
     let register t =
         t.last_id <- t.last_id + 1;
@@ -150,10 +141,7 @@ module Make = struct
         Lwt_list.iter_s (send t id) keys >>= fun () ->
         t.yield ()
 
-    let write t id buffer =
-        write_copy t id buffer
-
-    let writev t id buffers =
+    let assemble_buffers buffers =
         (* assemble list of buffers into one buffer before sending *)
         let total_len = List.fold_left (fun a b -> a + Cstruct.len b) 0 buffers in
         let total_buf = Cstruct.create total_len in
@@ -163,7 +151,13 @@ module Make = struct
                                             current_pos + part_len) 0 buffers 
         in
         assert(check_len == total_len);
-        write_copy t id total_buf
+        total_buf
+
+    let write t id buffer =
+        write_copy t id buffer
+
+    let writev t id buffers =
+        write_copy t id (assemble_buffers buffers)
 
 end
 

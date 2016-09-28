@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 2064815a3d07dd2e9d39b7dd525c4bf1)
+# DO NOT EDIT (digest: 5d5b24024b5a8101ca50798f96bf0c7d)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -17,6 +17,7 @@ true: annot, bin_annot
 # Library mirage-vnetif
 "lib/mirage-vnetif.cmxs": use_mirage-vnetif
 <lib/*.ml{,i,y}>: pkg_cstruct
+<lib/*.ml{,i,y}>: pkg_duration
 <lib/*.ml{,i,y}>: pkg_io-page
 <lib/*.ml{,i,y}>: pkg_ipaddr
 <lib/*.ml{,i,y}>: pkg_lwt
