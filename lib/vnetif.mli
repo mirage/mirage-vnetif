@@ -42,6 +42,6 @@ module Make(B : BACKEND) : sig
      and type     id = B.id
      and type     macaddr = Macaddr.t
 
-    val connect : B.t -> [`Ok of t | `Error of error] io
+    val connect : B.t -> t io
 end
 

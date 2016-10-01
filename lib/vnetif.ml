@@ -35,7 +35,7 @@ end
 module Make (B : BACKEND) = struct
   type page_aligned_buffer = Io_page.t
   type buffer = B.buffer
-  type error = [ `Disconnected | `Unimplemented | `Unknown of string ]
+  type error = [ `Disconnected ]
   type macaddr = B.macaddr
   type +'a io = 'a Lwt.t
   type id = B.id
@@ -59,11 +59,11 @@ module Make (B : BACKEND) = struct
 
   let connect backend = 
       match (B.register backend) with
-      | `Error e -> Lwt.return (`Error e)
+      | `Error _ -> Lwt.fail_with "vnetif: error while registering to backend"
       | `Ok id -> 
           let stats = { rx_bytes = 0L ; rx_pkts = 0l; tx_bytes = 0L; tx_pkts = 0l } in
           let t = { id; backend; stats; wake_listener=None } in
-          Lwt.return (`Ok t)
+          Lwt.return t
 
   let disconnect t =
       B.unregister t.backend t.id >>= fun () ->
