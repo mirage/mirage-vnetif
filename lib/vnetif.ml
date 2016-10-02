@@ -35,7 +35,7 @@ end
 module Make (B : BACKEND) = struct
   type page_aligned_buffer = Io_page.t
   type buffer = B.buffer
-  type error = [ `Disconnected ]
+  type error = [ `Disconnected | `Unimplemented | `Unknown of string ]
   type macaddr = B.macaddr
   type +'a io = 'a Lwt.t
   type id = B.id
