@@ -54,9 +54,6 @@ module Make (B : BACKEND) = struct
     stats : stats;
   }
 
-  let id t =
-    t.id
-
   let connect backend = 
       match (B.register backend) with
       | `Error _ -> Lwt.fail_with "vnetif: error while registering to backend"
