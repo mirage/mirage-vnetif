@@ -139,7 +139,7 @@ module Make = struct
                 Lwt.return_unit
         in
         Lwt_list.iter_s (send t id) keys >>= fun () ->
-        t.yield ()
+        t.yield () >|= fun () -> Ok ()
 
     let assemble_buffers buffers =
         (* assemble list of buffers into one buffer before sending *)

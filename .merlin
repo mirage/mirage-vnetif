@@ -1,4 +1,4 @@
 EXT lwt
-PKG mirage-clock-unix mirage-console mirage-net-unix mirage-unix tcpip mirage-types
+PKG mirage-clock-unix mirage-console mirage-net-unix mirage-unix tcpip mirage-types lwt io-page result
 S lib/*.ml
 S lib/*.mli

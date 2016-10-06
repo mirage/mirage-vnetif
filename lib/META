@@ -1,8 +1,9 @@
 # OASIS_START
-# DO NOT EDIT (digest: 5b3310a3f3435e24aac1f5bd7797322f)
+# DO NOT EDIT (digest: 66352c6e6d8497069e42ea2474fb347a)
 version = "0.1"
 description = "Virtual Netif and software bridge for Mirage"
-requires = "cstruct lwt mirage-types ipaddr mirage-profile io-page duration"
+requires =
+"cstruct lwt mirage-types mirage-types.lwt ipaddr mirage-profile io-page duration result"
 archive(byte) = "mirage-vnetif.cma"
 archive(byte, plugin) = "mirage-vnetif.cma"
 archive(native) = "mirage-vnetif.cmxa"

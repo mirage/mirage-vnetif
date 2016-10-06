@@ -14,20 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-open Lwt
+open Result
+open V1.Network
+open Lwt.Infix
+
 module type BACKEND = sig
     type 'a io = 'a Lwt.t
     type buffer = Cstruct.t
     type id = int
     type macaddr = Macaddr.t
     type t
-    type error = [ `Unknown of string | `Disconnected | `Unimplemented ]
 
     val register : t -> [ `Ok of id | `Error of error ]
     val unregister : t -> id -> unit io
     val mac : t -> id -> macaddr
-    val write : t -> id -> buffer -> unit io
-    val writev : t -> id -> buffer list -> unit io
+    val write : t -> id -> buffer -> (unit, error) result io
+    val writev : t -> id -> buffer list -> (unit, error) result io
     val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
     val unregister_and_flush : t -> id -> unit io
 end
@@ -39,13 +41,6 @@ module Make (B : BACKEND) = struct
   type macaddr = B.macaddr
   type +'a io = 'a Lwt.t
   type id = B.id
-
-  type stats = {
-    mutable rx_bytes : int64;
-    mutable rx_pkts : int32;
-    mutable tx_bytes : int64;
-    mutable tx_pkts : int32;
-  }
 
   type t = {
     id : B.id;
@@ -81,14 +76,15 @@ module Make (B : BACKEND) = struct
 
   let listen t fn =
     let listener t fn buf =
-        t.stats.rx_bytes <- Int64.add (Int64.of_int (Cstruct.len buf)) (t.stats.rx_bytes);
-        t.stats.rx_pkts <- Int32.succ t.stats.rx_pkts;
-        fn buf
-    in 
+      t.stats.rx_bytes <- Int64.add (Int64.of_int (Cstruct.len buf)) (t.stats.rx_bytes);
+      t.stats.rx_pkts <- Int32.succ t.stats.rx_pkts;
+      fn buf
+    in
     B.set_listen_fn t.backend t.id (listener t fn);
     let task, waker = MProf.Trace.named_task "Netif.listen" in
     t.wake_listener <- (Some waker);
-    task
+    task >|= fun () ->
+    Ok ()
 
   let mac t =
     B.mac t.backend t.id
