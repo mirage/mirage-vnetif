@@ -14,13 +14,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
+open V1.Network
+
 module Make : sig
     type 'a io = 'a Lwt.t
     type buffer = Cstruct.t
     type id = int
     type macaddr = Macaddr.t
     type t
-    type error = [ `Unknown of string | `Disconnected | `Unimplemented ]
 
     val create : ?yield:(unit -> unit io) -> ?use_async_readers:bool -> unit -> t
     val register : t -> [ `Ok of id | `Error of error ]
@@ -33,8 +34,8 @@ module Make : sig
     val unregister_and_flush : t -> id -> unit io
 
     val mac : t -> id -> macaddr
-    val write : t -> id -> buffer -> unit io
-    val writev : t -> id -> buffer list -> unit io
+    val write : t -> id -> buffer -> (unit, error) result io
+    val writev : t -> id -> buffer list -> (unit, error) result io
     val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
 
 end

@@ -18,7 +18,6 @@ open Lwt.Infix
 
 module Make(TIME : V1_LWT.TIME)(MCLOCK : V1_LWT.MCLOCK)(B : Vnetif.BACKEND) = struct
 
-  type error = B.error
   type macaddr = B.macaddr
   type 'a io = 'a B.io
   type buffer = B.buffer
@@ -153,7 +152,7 @@ module Make(TIME : V1_LWT.TIME)(MCLOCK : V1_LWT.MCLOCK)(B : Vnetif.BACKEND) = st
 
               (* send pkt *)
               (*Printf.printf "send pkt len %d, next len=%d\n%!" cur_pkt_elt.len t.queue_next_len;*)
-              B.writev t.xt cur_pkt_elt.id cur_pkt_elt.buffers >>= fun () ->
+              B.writev t.xt cur_pkt_elt.id cur_pkt_elt.buffers >>= fun _ ->
               
               Lwt.return_unit
           )
