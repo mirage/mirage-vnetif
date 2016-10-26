@@ -16,6 +16,7 @@
  *)
 
 open V1.Network
+open Result
 
 module type BACKEND = sig
     type 'a io = 'a Lwt.t

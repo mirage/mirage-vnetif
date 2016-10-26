@@ -15,6 +15,7 @@
  *)
 
 open V1.Network
+open Result
 
 module Make : sig
     type 'a io = 'a Lwt.t
