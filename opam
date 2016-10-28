@@ -13,7 +13,7 @@ install: [make "install"]
 remove: [
   ["ocamlfind" "remove" "mirage-vnetif"]
 ]
-depends: [ 
+depends: [
   "lwt"
   "mirage-types"
   "cstruct"
@@ -21,4 +21,5 @@ depends: [
   "io-page"
   "mirage-profile"
   "duration"
+  "result"
 ]

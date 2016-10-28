@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 open Lwt
+open Result
 
 module Make = struct
     type 'a io = 'a Lwt.t
