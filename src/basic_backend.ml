@@ -21,7 +21,6 @@ module Make = struct
     type buffer = Cstruct.t
     type id = int
     type macaddr = Macaddr.t
-    type error = [ `Unknown of string | `Disconnected | `Unimplemented ]
 
     type c = {
         mutable callback_counter : int;
@@ -69,16 +68,16 @@ module Make = struct
         if use_async_readers then
             let listener_callback f c buffer =
                 inc_callback_counter c >>= fun () ->
-                Lwt.async (fun () -> 
-                    f buffer >>= fun () -> 
-                    dec_callback_counter c); 
+                Lwt.async (fun () ->
+                    f buffer >>= fun () ->
+                    dec_callback_counter c);
                 Lwt.return_unit
             in
             {last_id;call_counter;listeners;macs;listener_callbacks_in_progress;yield;use_async_readers;listener_callback}
         else
             let listener_callback f c buffer =
                 inc_callback_counter c >>= fun () ->
-                f buffer >>= fun () -> 
+                f buffer >>= fun () ->
                 dec_callback_counter c
             in
             {last_id;call_counter;listeners;macs;listener_callbacks_in_progress;yield;use_async_readers;listener_callback}
@@ -87,8 +86,8 @@ module Make = struct
         t.last_id <- t.last_id + 1;
         Hashtbl.add t.macs t.last_id (make_mac t.last_id);
         Hashtbl.add t.listener_callbacks_in_progress t.last_id {
-            callback_counter = 0; 
-            cond = Lwt_condition.create(); 
+            callback_counter = 0;
+            cond = Lwt_condition.create();
             mutex = Lwt_mutex.create() };
         (`Ok t.last_id)
 
@@ -99,7 +98,7 @@ module Make = struct
         Lwt.return_unit
 
     let wait_for_callbacks c =
-        Lwt_mutex.with_lock c.mutex (fun () -> 
+        Lwt_mutex.with_lock c.mutex (fun () ->
             let rec loop = function
                 | 0 -> Lwt.return_unit
                 | _ -> (Lwt_condition.wait ~mutex:c.mutex c.cond >>= fun _ ->
@@ -126,8 +125,8 @@ module Make = struct
         dst
 
     let write_copy t id buffer =
-        let keys = 
-            Hashtbl.fold (fun k v lst -> k::lst) t.listeners [] 
+        let keys =
+            Hashtbl.fold (fun k _v lst -> k::lst) t.listeners []
         in
         let send t src dst =
             if src != dst then
@@ -146,10 +145,10 @@ module Make = struct
         (* assemble list of buffers into one buffer before sending *)
         let total_len = List.fold_left (fun a b -> a + Cstruct.len b) 0 buffers in
         let total_buf = Cstruct.create total_len in
-        let check_len = List.fold_left (fun current_pos part_buf -> 
-                                            let part_len = Cstruct.len part_buf in 
+        let check_len = List.fold_left (fun current_pos part_buf ->
+                                            let part_len = Cstruct.len part_buf in
                                             Cstruct.blit part_buf 0 total_buf current_pos part_len;
-                                            current_pos + part_len) 0 buffers 
+                                            current_pos + part_len) 0 buffers
         in
         assert(check_len == total_len);
         total_buf
@@ -161,4 +160,3 @@ module Make = struct
         write_copy t id (assemble_buffers buffers)
 
 end
-

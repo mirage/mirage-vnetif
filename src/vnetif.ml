@@ -37,10 +37,10 @@ end
 module Make (B : BACKEND) = struct
   type page_aligned_buffer = Io_page.t
   type buffer = B.buffer
-  type error = [ `Disconnected | `Unimplemented | `Unknown of string ]
+  type error = V1.Network.error
+  let pp_error = Mirage_pp.pp_network_error
   type macaddr = B.macaddr
   type +'a io = 'a Lwt.t
-  type id = B.id
 
   type t = {
     id : B.id;
@@ -49,10 +49,10 @@ module Make (B : BACKEND) = struct
     stats : stats;
   }
 
-  let connect backend = 
+  let connect backend =
       match (B.register backend) with
       | `Error _ -> Lwt.fail_with "vnetif: error while registering to backend"
-      | `Ok id -> 
+      | `Ok id ->
           let stats = { rx_bytes = 0L ; rx_pkts = 0l; tx_bytes = 0L; tx_pkts = 0l } in
           let t = { id; backend; stats; wake_listener=None } in
           Lwt.return t
@@ -68,7 +68,7 @@ module Make (B : BACKEND) = struct
     t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts;
     B.write t.backend t.id buffer
 
-  let writev t buffers = 
+  let writev t buffers =
     let total_len = (List.fold_left (fun a b -> a + (Cstruct.len b)) 0 buffers) in
     t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int total_len);
     t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts; (* assembled to single packet *)
@@ -92,7 +92,7 @@ module Make (B : BACKEND) = struct
   let get_stats_counters t =
     t.stats
 
-  let reset_stats_counters t = 
+  let reset_stats_counters t =
     t.stats.rx_bytes <- 0L;
     t.stats.rx_pkts  <- 0l;
     t.stats.tx_bytes <- 0L;

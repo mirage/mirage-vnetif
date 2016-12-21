@@ -1,28 +1,8 @@
-# OASIS_START
-# DO NOT EDIT (digest: b865dd8e99540f46118c8d22a1dd7751)
-# Ignore VCS directories, you can use the same kind of rule outside
-# OASIS_START/STOP if you want to exclude directories that contains
-# useless stuff for the build process
-true: annot, bin_annot
-<**/.svn>: -traverse
-<**/.svn>: not_hygienic
-".bzr": -traverse
-".bzr": not_hygienic
-".hg": -traverse
-".hg": not_hygienic
-".git": -traverse
-".git": not_hygienic
-"_darcs": -traverse
-"_darcs": not_hygienic
-# Library mirage-vnetif
-"lib/mirage-vnetif.cmxs": use_mirage-vnetif
-<lib/*.ml{,i,y}>: pkg_cstruct
-<lib/*.ml{,i,y}>: pkg_duration
-<lib/*.ml{,i,y}>: pkg_io-page
-<lib/*.ml{,i,y}>: pkg_ipaddr
-<lib/*.ml{,i,y}>: pkg_lwt
-<lib/*.ml{,i,y}>: pkg_mirage-profile
-<lib/*.ml{,i,y}>: pkg_mirage-types
-<lib/*.ml{,i,y}>: pkg_mirage-types-lwt
-<lib/*.ml{,i,y}>: pkg_result
-# OASIS_STOP
+true : bin_annot, safe_string, package(bytes)
+true: warn_error(+1..49), warn(A-4-41-44)
+
+<src>: include
+
+true: package(cstruct lwt mirage-clock-lwt mirage-clock-lwt ipaddr)
+true: package(mirage-profile io-page duration result mirage-time-lwt)
+true: package(mirage-types-lwt mirage-runtime)

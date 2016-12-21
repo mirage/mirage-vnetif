@@ -1,4 +1,6 @@
-EXT lwt
-PKG mirage-clock-unix mirage-console mirage-net-unix mirage-unix tcpip mirage-types lwt io-page result
-S lib/*.ml
-S lib/*.mli
+PKG mirage-clock-unix mirage-console mirage-net-unix mirage-unix tcpip
+PKG mirage-clock-lwt lwt io-page result ipaddr mirage-profile mirage-time-lwt
+PKG mirage-types-lwt mirage-runtime duration
+
+S src
+B _build/**

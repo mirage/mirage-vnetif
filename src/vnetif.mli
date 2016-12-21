@@ -19,30 +19,24 @@ open V1.Network
 open Result
 
 module type BACKEND = sig
-    type 'a io = 'a Lwt.t
-    type buffer = Cstruct.t
-    type id = int
-    type macaddr = Macaddr.t
-    type t
+  type 'a io = 'a Lwt.t
+  type buffer = Cstruct.t
+  type id = int
+  type macaddr = Macaddr.t
+  type t
 
-    val register : t -> [ `Ok of id | `Error of error ]
-    val unregister : t -> id -> unit io
-    val mac : t -> id -> macaddr
-    val write : t -> id -> buffer -> (unit, error) result io
-    val writev : t -> id -> buffer list -> (unit, error) result io
-    val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
-    val unregister_and_flush : t -> id -> unit io
+  val register : t -> [ `Ok of id | `Error of error ]
+  val unregister : t -> id -> unit io
+  val mac : t -> id -> macaddr
+  val write : t -> id -> buffer -> (unit, error) result io
+  val writev : t -> id -> buffer list -> (unit, error) result io
+  val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
+  val unregister_and_flush : t -> id -> unit io
 end
 
 
 (** Dummy interface for software bridge. *)
 module Make(B : BACKEND) : sig
-    include V1.NETWORK
-    with type 'a io = 'a Lwt.t
-     and type     page_aligned_buffer = Io_page.t
-     and type     buffer = Cstruct.t
-     and type     macaddr = Macaddr.t
-
-    val connect : B.t -> t io
+  include V1_LWT.NETWORK
+  val connect : B.t -> t io
 end
-
