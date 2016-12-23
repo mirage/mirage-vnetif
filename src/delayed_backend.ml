@@ -15,8 +15,13 @@
  *)
 
 open Lwt.Infix
+open Result
 
-module Make(TIME : V1_LWT.TIME)(MCLOCK : V1_LWT.MCLOCK)(B : Vnetif.BACKEND) = struct
+module Make
+    (TIME : Mirage_time_lwt.S)
+    (MCLOCK : Mirage_clock_lwt.MCLOCK)
+    (B : Vnetif.BACKEND) =
+struct
 
   type macaddr = B.macaddr
   type 'a io = 'a B.io
@@ -46,7 +51,7 @@ module Make(TIME : V1_LWT.TIME)(MCLOCK : V1_LWT.MCLOCK)(B : Vnetif.BACKEND) = st
     queue_not_empty_lock : Lwt_mutex.t;
 
     mutable last_send_ts : int64;
-    
+
   }
 
   let register t =
@@ -64,35 +69,29 @@ module Make(TIME : V1_LWT.TIME)(MCLOCK : V1_LWT.MCLOCK)(B : Vnetif.BACKEND) = st
   let unregister_and_flush t id =
     B.unregister_and_flush t.xt id
 
+  let ok = Lwt.return (Ok ())
+
   let writev t id buffers =
-    (** Add packet to queue and update counters *)
+    (* Add packet to queue and update counters *)
     let len = List.fold_left (fun a b -> a + Cstruct.len b) 0 buffers in
     let e = { buffers ; len ; id } in
-    (if (t.queue_total_bytes < t.bdp) then (* check outside lock first to avoid taking mutex *)
-        Lwt_mutex.with_lock t.queue_lock (fun () -> 
-            (if (t.queue_total_bytes < t.bdp) then
-            begin
-                t.queue_total_bytes <- t.queue_total_bytes + e.len;
-                t.queue_next_len <- e.len;
-                Queue.add e t.queue;
-                if (Queue.length t.queue) = 1 then (* queue was empty, signal waiting thread *)
-                begin
-                    Lwt_mutex.with_lock t.queue_not_empty_lock (fun () ->
-                        Lwt_condition.signal t.queue_not_empty_cond 1;
-                        Lwt.return_unit
-                    )                   
-                end
-                else begin
-                    Lwt.return_unit
-                end
-            end
-            else begin
-                (* Send queue full, discard packet to simulate congestion *)
-                Lwt.return_unit
-            end)) 
-    else begin
-        Lwt.return_unit
-    end)
+    if (t.queue_total_bytes < t.bdp) then
+      (* check outside lock first to avoid taking mutex *)
+      Lwt_mutex.with_lock t.queue_lock (fun () ->
+          if t.queue_total_bytes < t.bdp then (
+            t.queue_total_bytes <- t.queue_total_bytes + e.len;
+            t.queue_next_len <- e.len;
+            Queue.add e t.queue;
+            if Queue.length t.queue = 1 then
+              (* queue was empty, signal waiting thread *)
+              Lwt_mutex.with_lock t.queue_not_empty_lock (fun () ->
+                  Lwt_condition.signal t.queue_not_empty_cond 1;
+                  ok
+                )
+            else ok
+          ) else ok (* Send queue full, discard packet to simulate congestion *)
+        )
+    else ok
 
   let write t id buffer =
     writev t id [buffer]
@@ -101,7 +100,7 @@ module Make(TIME : V1_LWT.TIME)(MCLOCK : V1_LWT.MCLOCK)(B : Vnetif.BACKEND) = st
       (if (t.queue_next_len = 0) then (* no message in queue, wait *)
       begin
           (*Printf.printf "will sleep\n%!";*)
-          Lwt_condition.wait ~mutex:t.queue_not_empty_lock t.queue_not_empty_cond >>= fun x -> 
+          Lwt_condition.wait ~mutex:t.queue_not_empty_lock t.queue_not_empty_cond >>= fun _x ->
           (* reset tokens by setting timestamp, packet just appeared in queue *)
           t.last_send_ts <- (MCLOCK.elapsed_ns t.mclock);
           (*Printf.printf "awake ts=%Ld\n%!" t.last_send_ts;*)
@@ -116,15 +115,15 @@ module Make(TIME : V1_LWT.TIME)(MCLOCK : V1_LWT.MCLOCK)(B : Vnetif.BACKEND) = st
       let ns_per_token = Int64.div (Duration.of_sec 1) tokens_per_second in
       let ns_since_last_send = Int64.sub (MCLOCK.elapsed_ns t.mclock) t.last_send_ts in
 
-      let tokens = 
+      let tokens =
         (if ns_since_last_send < ns_per_token then
             0L
         else begin
             let total_tokens = (Int64.div ns_since_last_send ns_per_token) in
-            if total_tokens > (Int64.of_int t.mtu) then 
-                Int64.of_int t.mtu 
+            if total_tokens > (Int64.of_int t.mtu) then
+                Int64.of_int t.mtu
             else begin
-                total_tokens 
+                total_tokens
             end
         end)
       in
@@ -153,7 +152,7 @@ module Make(TIME : V1_LWT.TIME)(MCLOCK : V1_LWT.MCLOCK)(B : Vnetif.BACKEND) = st
               (* send pkt *)
               (*Printf.printf "send pkt len %d, next len=%d\n%!" cur_pkt_elt.len t.queue_next_len;*)
               B.writev t.xt cur_pkt_elt.id cur_pkt_elt.buffers >>= fun _ ->
-              
+
               Lwt.return_unit
           )
       else begin
@@ -166,24 +165,27 @@ module Make(TIME : V1_LWT.TIME)(MCLOCK : V1_LWT.MCLOCK)(B : Vnetif.BACKEND) = st
           (*Printf.printf "about to sleep %Ld\n%!" ns;*)
           TIME.sleep_ns ns
       end) >>= fun () ->
-      (* TOOD 
+      (* TOOD
        * Always sleep after sending packet to regain tokens if a new one is ready
        * If awoken, go to sleep right away as no point in checking if enough tokens *)
       wait_for_token_and_send t
 
-  let create (t:B.t) (mclock:MCLOCK.t) ?(rtt_ns=(Duration.of_ms 1)) ?(bandwidth_bits=1_000_000_000L) ?(mtu=1500) () =
+  let create
+      (t:B.t) (mclock:MCLOCK.t) ?(rtt_ns=(Duration.of_ms 1))
+      ?(bandwidth_bits=1_000_000_000L) ?(mtu=1500) ()
+    =
       let bytes_per_second = Int64.div bandwidth_bits 8L in
       let bytes_bandwidth_delay = (Int64.to_float bytes_per_second) *. (Duration.to_f rtt_ns) in
       (*Printf.printf "bdp=%f\n%!" bytes_bandwidth_delay;*)
       let u = { xt = t ; rtt_ns ; bandwidth_bits ; mtu ;
-        queue_total_bytes = 0; queue = Queue.create (); 
+        queue_total_bytes = 0; queue = Queue.create ();
         bdp = int_of_float bytes_bandwidth_delay ; queue_lock = Lwt_mutex.create () ;
         queue_not_empty_cond = Lwt_condition.create () ; queue_not_empty_lock = Lwt_mutex.create () ;
-        last_send_ts = MCLOCK.elapsed_ns mclock; mclock; queue_next_len = 0 
+        last_send_ts = MCLOCK.elapsed_ns mclock; mclock; queue_next_len = 0
         } in
-      Lwt.async (fun () -> 
+      Lwt.async (fun () ->
           Lwt_mutex.lock u.queue_not_empty_lock >>= fun () -> (* must be locked before entering wait_for_token_and_send *)
-          wait_for_token_and_send u); 
+          wait_for_token_and_send u);
       u
 
 end

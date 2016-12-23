@@ -5,18 +5,21 @@ authors: "Magnus Skjegstad <magnus@skjegstad.com>"
 homepage: "https://github.com/MagnusS/mirage-vnetif"
 bug-reports: "https://github.com/MagnusS/mirage-vnetif/issues/"
 dev-repo: "https://github.com/MagnusS/mirage-vnetif.git"
+doc: "https://MagnusS.github.io/mirage-vnetif/"
+
 license: "ISC"
-build: [
-  [make]
-]
-install: [make "install"]
-remove: [
-  ["ocamlfind" "remove" "mirage-vnetif"]
-]
+
+build: ["ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%"]
+
 depends: [
+  "ocamlfind"  {build}
+  "ocamlbuild" {build}
+  "topkg"      {build}
   "lwt"
-  "mirage-types" {>= "3.0.0"}
+  "mirage-time-lwt"
+  "mirage-clock-lwt" {>= "1.2.0"}
   "mirage-types-lwt" {>= "3.0.0"}
+  "mirage-runtime"
   "cstruct"
   "ipaddr"
   "io-page"
