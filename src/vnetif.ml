@@ -15,7 +15,7 @@
  *)
 
 open Result
-open V1.Network
+open Mirage_net
 open Lwt.Infix
 
 module type BACKEND = sig
@@ -37,8 +37,8 @@ end
 module Make (B : BACKEND) = struct
   type page_aligned_buffer = Io_page.t
   type buffer = B.buffer
-  type error = V1.Network.error
-  let pp_error = Mirage_pp.pp_network_error
+  type error = Mirage_net.error
+  let pp_error = Mirage_net.pp_error
   type macaddr = B.macaddr
   type +'a io = 'a Lwt.t
 
