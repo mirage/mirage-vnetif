@@ -18,8 +18,7 @@ depends: [
   "lwt"
   "mirage-time-lwt"
   "mirage-clock-lwt" {>= "1.2.0"}
-  "mirage-types-lwt" {>= "3.0.0"}
-  "mirage-runtime"
+  "mirage-net-lwt"   {>= "1.0.0"}
   "cstruct"
   "ipaddr"
   "io-page"

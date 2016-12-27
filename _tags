@@ -5,4 +5,4 @@ true: warn_error(+1..49), warn(A-4-41-44)
 
 true: package(cstruct lwt mirage-clock-lwt mirage-clock-lwt ipaddr)
 true: package(mirage-profile io-page duration result mirage-time-lwt)
-true: package(mirage-types-lwt mirage-runtime)
+true: package(mirage-net mirage-net-lwt)

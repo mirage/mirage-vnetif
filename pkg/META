@@ -1,7 +1,6 @@
 description = "Virtual Netif and software bridge for Mirage"
 version = "%%VERSION_NUM%%"
-requires =
-"cstruct lwt mirage-types mirage-types-lwt ipaddr mirage-profile io-page duration result"
+requires ="cstruct lwt mirage-net-lwt ipaddr mirage-profile io-page duration result"
 archive(byte) = "mirage-vnetif.cma"
 plugin(byte) = "mirage-vnetif.cma"
 archive(native) = "mirage-vnetif.cmxa"

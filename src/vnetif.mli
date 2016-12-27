@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-open V1.Network
+open Mirage_net
 open Result
 
 module type BACKEND = sig
@@ -37,6 +37,6 @@ end
 
 (** Dummy interface for software bridge. *)
 module Make(B : BACKEND) : sig
-  include V1_LWT.NETWORK
-  val connect : B.t -> t io
+  include Mirage_net_lwt.S
+  val connect : B.t -> t Lwt.t
 end
