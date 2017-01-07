@@ -23,7 +23,7 @@ let blue fmt   = Printf.sprintf ("\027[36m"^^fmt^^"\027[m")
 let netmask = Ipaddr.V4.of_string_exn "255.255.255.0" 
 let gw = Ipaddr.V4.of_string_exn "192.168.56.1" 
 
-module Main (C: V1_LWT.CONSOLE) = struct
+module Main (C: Mirage_types_lwt.CONSOLE) = struct
 
   module Stack = struct
     module B = Basic_backend.Make
@@ -59,10 +59,10 @@ module Main (C: V1_LWT.CONSOLE) = struct
     or_error "udpv4" Stack.U.connect ipv4 >>= fun udpv4 ->
     or_error "tcpv4" Stack.T.connect ipv4 >>= fun tcpv4 ->
     let config = {
-        V1_LWT.name = "stack";
-        V1_LWT.console = c; 
-        V1_LWT.interface = netif;
-        V1_LWT.mode = `IPv4 (Ipaddr.V4.of_string_exn ip, netmask, [gw]);
+        Mirage_types_lwt.name = "stack";
+        Mirage_types_lwt.console = c; 
+        Mirage_types_lwt.interface = netif;
+        Mirage_types_lwt.mode = `IPv4 (Ipaddr.V4.of_string_exn ip, netmask, [gw]);
     } in
     or_error "stack" (Stack.connect config ethif ipv4 udpv4) tcpv4
   

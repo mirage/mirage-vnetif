@@ -21,7 +21,7 @@ open Printf
 open Gc
 open String
 
-module Main (C : V1_LWT.CONSOLE) = struct
+module Main (C : Mirage_types_lwt.CONSOLE) = struct
 
   module S = struct
     module B = Basic_backend.Make
@@ -48,10 +48,10 @@ module Main (C : V1_LWT.CONSOLE) = struct
     or_error "udpv4" S.U.connect ipv4 >>= fun udpv4 ->
     or_error "tcpv4" S.T.connect ipv4 >>= fun tcpv4 ->
     let config = {
-        V1_LWT.name = "stack";
-        V1_LWT.console = c; 
-        V1_LWT.interface = netif;
-        V1_LWT.mode = ip_config;
+        Mirage_types_lwt.name = "stack";
+        Mirage_types_lwt.console = c; 
+        Mirage_types_lwt.interface = netif;
+        Mirage_types_lwt.mode = ip_config;
     } in
     or_error "stack" (S.connect config ethif ipv4 udpv4) tcpv4
 
