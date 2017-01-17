@@ -21,7 +21,7 @@ open Printf
 open Gc
 open String
 
-module Main (C : V1_LWT.CONSOLE) = struct
+module Main (C : Mirage_types_lwt.CONSOLE) = struct
 
   module B = Basic_backend.Make
   module V = Vnetif.Make(B)

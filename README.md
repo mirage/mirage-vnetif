@@ -44,10 +44,10 @@ let create_stack c backend ip netmask gw =
     or_error "udpv4" S.U.connect ipv4 >>= fun udpv4 ->
     or_error "tcpv4" S.T.connect ipv4 >>= fun tcpv4 ->
     let config = {
-        V1_LWT.name = "stack";
-        V1_LWT.console = c; 
-        V1_LWT.interface = netif;
-        V1_LWT.mode = `IPv4 (ip, netmask, gw);
+        Mirage_types_lwt.name = "stack";
+        Mirage_types_lwt.console = c; 
+        Mirage_types_lwt.interface = netif;
+        Mirage_types_lwt.mode = `IPv4 (ip, netmask, gw);
     } in
     or_error "stack" (S.connect config ethif ipv4 udpv4) tcpv4
 
