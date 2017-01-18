@@ -16,9 +16,9 @@ depends: [
   "ocamlbuild" {build}
   "topkg"      {build}
   "lwt"
-  "mirage-time-lwt"
+  "mirage-time-lwt" {>= "1.0.0"}
   "mirage-clock-lwt" {>= "1.2.0"}
-  "mirage-net-lwt"   {>= "1.0.0"}
+  "mirage-net-lwt" {>= "1.0.0"}
   "cstruct"
   "ipaddr"
   "io-page"
@@ -26,3 +26,4 @@ depends: [
   "duration"
   "result"
 ]
+tags: "org:mirage"
