@@ -1,3 +1,7 @@
+0.3.1 (unreleased)
+---- 
+- Don't export `Delayed_backend` yet
+
 0.3 (unreleased)
 ----
 - Use topkg
