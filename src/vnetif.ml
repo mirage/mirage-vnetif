@@ -18,6 +18,9 @@ open Result
 open Mirage_net
 open Lwt.Infix
 
+let src = Logs.Src.create "vnetif" ~doc:"in-memory network interface"
+module Log = (val Logs.src_log src : Logs.LOG)
+
 module type BACKEND = sig
     type 'a io = 'a Lwt.t
     type buffer = Cstruct.t
@@ -71,8 +74,9 @@ module Make (B : BACKEND) = struct
       B.write t.backend t.id buffer
     in
     match t.size_limit with
-    | None -> send buffer
+    | None ->Log.debug (fun f -> f "no size limit, sending");send buffer
     | Some limit ->
+      Log.debug (fun f -> f "checking packet size %d against size limit %d" (Cstruct.len buffer) limit);
       assert (limit >= (Cstruct.len buffer));
       send buffer
 
@@ -84,8 +88,9 @@ module Make (B : BACKEND) = struct
       B.writev t.backend t.id buffers
     in
     match t.size_limit with
-    | None -> send buffers
+    | None ->Log.debug (fun f -> f "no size limit, sending");send buffers
     | Some limit ->
+      Log.debug (fun f -> f "checking packet size %d against size limit %d" (Cstruct.lenv buffers) limit);
       assert (limit >= (Cstruct.lenv buffers));
       send buffers
 
