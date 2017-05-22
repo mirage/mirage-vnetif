@@ -18,6 +18,9 @@ open Result
 open Mirage_net
 open Lwt.Infix
 
+let src = Logs.Src.create "vnetif" ~doc:"in-memory network interface"
+module Log = (val Logs.src_log src : Logs.LOG)
+
 module type BACKEND = sig
     type 'a io = 'a Lwt.t
     type buffer = Cstruct.t
@@ -46,15 +49,16 @@ module Make (B : BACKEND) = struct
     id : B.id;
     backend : B.t;
     mutable wake_listener : unit Lwt.u option;
+    size_limit : int option;
     stats : stats;
   }
 
-  let connect backend =
+  let connect ?size_limit backend =
       match (B.register backend) with
       | `Error _ -> Lwt.fail_with "vnetif: error while registering to backend"
       | `Ok id ->
           let stats = { rx_bytes = 0L ; rx_pkts = 0l; tx_bytes = 0L; tx_pkts = 0l } in
-          let t = { id; backend; stats; wake_listener=None } in
+          let t = { id; size_limit; backend; stats; wake_listener=None } in
           Lwt.return t
 
   let disconnect t =
@@ -64,15 +68,31 @@ module Make (B : BACKEND) = struct
       | Some e -> (Lwt.wakeup e ()); Lwt.return_unit
 
   let write t buffer =
-    t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int (Cstruct.len buffer));
-    t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts;
-    B.write t.backend t.id buffer
+    let send buffer =
+      t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int (Cstruct.len buffer));
+      t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts;
+      B.write t.backend t.id buffer
+    in
+    match t.size_limit with
+    | None ->Log.debug (fun f -> f "no size limit, sending");send buffer
+    | Some limit ->
+      Log.debug (fun f -> f "checking packet size %d against size limit %d" (Cstruct.len buffer) limit);
+      assert (limit >= (Cstruct.len buffer));
+      send buffer
 
   let writev t buffers =
-    let total_len = (List.fold_left (fun a b -> a + (Cstruct.len b)) 0 buffers) in
-    t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int total_len);
-    t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts; (* assembled to single packet *)
-    B.writev t.backend t.id buffers
+    let send buffers =
+      let total_len = (List.fold_left (fun a b -> a + (Cstruct.len b)) 0 buffers) in
+      t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int total_len);
+      t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts; (* assembled to single packet *)
+      B.writev t.backend t.id buffers
+    in
+    match t.size_limit with
+    | None ->Log.debug (fun f -> f "no size limit, sending");send buffers
+    | Some limit ->
+      Log.debug (fun f -> f "checking packet size %d against size limit %d" (Cstruct.lenv buffers) limit);
+      assert (limit >= (Cstruct.lenv buffers));
+      send buffers
 
   let listen t fn =
     let listener t fn buf =

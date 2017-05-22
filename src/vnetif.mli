@@ -38,5 +38,5 @@ end
 (** Dummy interface for software bridge. *)
 module Make(B : BACKEND) : sig
   include Mirage_net_lwt.S
-  val connect : B.t -> t Lwt.t
+  val connect : ?size_limit:int -> B.t -> t Lwt.t
 end

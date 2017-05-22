@@ -25,5 +25,6 @@ depends: [
   "mirage-profile"
   "duration"
   "result"
+  "logs"
 ]
 tags: "org:mirage"
