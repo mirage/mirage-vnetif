@@ -3,6 +3,8 @@ v0.4.0 2017-06-12
 
 - Add optional `size_limit` to `Vnetif.create` to make it easier to test
   MTUs (e.g. in TCP/IP) (#16 @yomimono).
+- Port build to Jbuilder.
+- Add Travis CI tests.
 
 v0.3.1 2016-02-22
 -----------------
