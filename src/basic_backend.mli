@@ -15,7 +15,6 @@
  *)
 
 open Mirage_net
-open Result
 
 module Make : sig
     type 'a io = 'a Lwt.t

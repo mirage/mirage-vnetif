@@ -15,7 +15,6 @@
  *)
 
 open Lwt.Infix
-open Result
 
 module Make
     (TIME : Mirage_time_lwt.S)

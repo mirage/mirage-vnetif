@@ -24,7 +24,7 @@ depends: [
   "io-page"
   "mirage-profile"
   "duration"
-  "result"
   "logs"
 ]
 tags: ["org:mirage"]
+available: [ocaml-version >= "4.03.0"]
