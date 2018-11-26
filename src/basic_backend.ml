@@ -88,7 +88,7 @@ module Make = struct
             callback_counter = 0;
             cond = Lwt_condition.create();
             mutex = Lwt_mutex.create() };
-        (`Ok t.last_id)
+        Ok t.last_id
 
     let unregister t id =
         Hashtbl.remove t.macs id;
@@ -123,39 +123,24 @@ module Make = struct
         Cstruct.blit src 0 dst 0 len;
         dst
 
-    let write_copy t id buffer =
-        let keys =
-            Hashtbl.fold (fun k _v lst -> k::lst) t.listeners []
-        in
-        let send t src dst =
-            if src != dst then
+    let write t id ?size fill =
+        let keys = Hashtbl.fold (fun k _v lst -> k::lst) t.listeners [] in
+        let send t buf src dst =
+          if src != dst then
             begin
-                t.call_counter <- t.call_counter + 1;
-                let fn = (Hashtbl.find t.listeners dst) in
-                let c = (Hashtbl.find t.listener_callbacks_in_progress dst) in
-                t.listener_callback fn c (buffer_copy buffer)
+              t.call_counter <- t.call_counter + 1;
+              let fn = (Hashtbl.find t.listeners dst) in
+              let c = (Hashtbl.find t.listener_callbacks_in_progress dst) in
+              t.listener_callback fn c (buffer_copy buf)
             end else
-                Lwt.return_unit
+            Lwt.return_unit
         in
-        Lwt_list.iter_s (send t id) keys >>= fun () ->
+        let size = match size with None -> 1514 | Some s -> s in
+        let buf = Cstruct.create size in
+        let len = 14 + fill buf in
+        assert (len <= size) ;
+        let buf = Cstruct.sub buf 0 len in
+        Lwt_list.iter_s (send t buf id) keys >>= fun () ->
         t.yield () >|= fun () -> Ok ()
-
-    let assemble_buffers buffers =
-        (* assemble list of buffers into one buffer before sending *)
-        let total_len = List.fold_left (fun a b -> a + Cstruct.len b) 0 buffers in
-        let total_buf = Cstruct.create total_len in
-        let check_len = List.fold_left (fun current_pos part_buf ->
-                                            let part_len = Cstruct.len part_buf in
-                                            Cstruct.blit part_buf 0 total_buf current_pos part_len;
-                                            current_pos + part_len) 0 buffers
-        in
-        assert(check_len == total_len);
-        total_buf
-
-    let write t id buffer =
-        write_copy t id buffer
-
-    let writev t id buffers =
-        write_copy t id (assemble_buffers buffers)
 
 end

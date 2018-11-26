@@ -27,20 +27,18 @@ module type BACKEND = sig
     type macaddr = Macaddr.t
     type t
 
-    val register : t -> [ `Ok of id | `Error of error ]
+    val register : t -> (id, Net.error) result
     val unregister : t -> id -> unit io
     val mac : t -> id -> macaddr
-    val write : t -> id -> buffer -> (unit, error) result io
-    val writev : t -> id -> buffer list -> (unit, error) result io
+    val write : t -> id -> ?size:int -> (buffer -> int) -> (unit, Net.error) result io
     val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
     val unregister_and_flush : t -> id -> unit io
 end
 
 module Make (B : BACKEND) = struct
-  type page_aligned_buffer = Io_page.t
   type buffer = B.buffer
-  type error = Mirage_net.error
-  let pp_error = Mirage_net.pp_error
+  type error = Net.error
+  let pp_error = Mirage_net.Net.pp_error
   type macaddr = B.macaddr
   type +'a io = 'a Lwt.t
 
@@ -54,11 +52,13 @@ module Make (B : BACKEND) = struct
 
   let connect ?size_limit backend =
       match (B.register backend) with
-      | `Error _ -> Lwt.fail_with "vnetif: error while registering to backend"
-      | `Ok id ->
+      | Error _ -> Lwt.fail_with "vnetif: error while registering to backend"
+      | Ok id ->
           let stats = { rx_bytes = 0L ; rx_pkts = 0l; tx_bytes = 0L; tx_pkts = 0l } in
           let t = { id; size_limit; backend; stats; wake_listener=None } in
           Lwt.return t
+
+  let mtu t = match t.size_limit with None -> 1500 | Some x -> x
 
   let disconnect t =
       B.unregister t.backend t.id >>= fun () ->
@@ -66,32 +66,20 @@ module Make (B : BACKEND) = struct
       | None -> Lwt.return_unit
       | Some e -> (Lwt.wakeup e ()); Lwt.return_unit
 
-  let write t buffer =
-    let send buffer =
-      t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int (Cstruct.len buffer));
+  let write t ?size fill =
+    match
+      match t.size_limit, size with
+      | Some l, Some s when s > l -> Error `Exceeds_mtu
+      | _, Some s -> Ok s
+      | Some l, None -> Ok l
+      | None, None -> Ok (mtu t)
+    with
+    | Error e -> Lwt.return (Error e)
+    | Ok s ->
+      let size = s + 14 in
+      t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int size);
       t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts;
-      B.write t.backend t.id buffer
-    in
-    match t.size_limit with
-    | None ->Log.debug (fun f -> f "no size limit, sending");send buffer
-    | Some limit ->
-      Log.debug (fun f -> f "checking packet size %d against size limit %d" (Cstruct.len buffer) limit);
-      assert (limit >= (Cstruct.len buffer));
-      send buffer
-
-  let writev t buffers =
-    let send buffers =
-      let total_len = (List.fold_left (fun a b -> a + (Cstruct.len b)) 0 buffers) in
-      t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int total_len);
-      t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts; (* assembled to single packet *)
-      B.writev t.backend t.id buffers
-    in
-    match t.size_limit with
-    | None ->Log.debug (fun f -> f "no size limit, sending");send buffers
-    | Some limit ->
-      Log.debug (fun f -> f "checking packet size %d against size limit %d" (Cstruct.lenv buffers) limit);
-      assert (limit >= (Cstruct.lenv buffers));
-      send buffers
+      B.write t.backend t.id ~size fill
 
   let listen t fn =
     let listener t fn buf =
