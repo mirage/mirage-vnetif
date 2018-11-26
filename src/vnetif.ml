@@ -37,7 +37,6 @@ module type BACKEND = sig
 end
 
 module Make (B : BACKEND) = struct
-  type page_aligned_buffer = Io_page.t
   type buffer = B.buffer
   type error = Mirage_net.error
   let pp_error = Mirage_net.pp_error
@@ -59,6 +58,11 @@ module Make (B : BACKEND) = struct
           let stats = { rx_bytes = 0L ; rx_pkts = 0l; tx_bytes = 0L; tx_pkts = 0l } in
           let t = { id; size_limit; backend; stats; wake_listener=None } in
           Lwt.return t
+
+  let mtu t = match t.size_limit with None -> 1514 | Some x -> x
+
+  let allocate_frame ?size t =
+    Cstruct.create (match size with None -> mtu t | Some x -> min x (mtu t))
 
   let disconnect t =
       B.unregister t.backend t.id >>= fun () ->
