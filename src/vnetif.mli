@@ -16,7 +16,6 @@
  *)
 
 open Mirage_net
-open Result
 
 module type BACKEND = sig
   type 'a io = 'a Lwt.t
