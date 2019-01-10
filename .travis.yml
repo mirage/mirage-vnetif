@@ -8,9 +8,7 @@ env:
   global:
   - PACKAGE="mirage-vnetif"
   matrix:
-  - DISTRO="debian-stable" OCAML_VERSION="4.03"
   - DISTRO="debian-testing" OCAML_VERSION="4.04"
-  - DISTRO="debian-unstable" OCAML_VERSION="4.04"
-  - DISTRO="ubuntu-16.04" OCAML_VERSION="4.04"
-  - DISTRO="alpine" OCAML_VERSION="4.04"
-  - DISTRO="alpine" OCAML_VERSION="4.03"
+  - DISTRO="debian-unstable" OCAML_VERSION="4.05"
+  - DISTRO="ubuntu-16.04" OCAML_VERSION="4.06"
+  - DISTRO="alpine" OCAML_VERSION="4.07"
