@@ -23,7 +23,6 @@ depends: [
   "cstruct" {>="2.4.0"}
   "ipaddr" {>= "3.0.0"}
   "macaddr"
-  "io-page"
   "mirage-profile"
   "duration"
   "logs"

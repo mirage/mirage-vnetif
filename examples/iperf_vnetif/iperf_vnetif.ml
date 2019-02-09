@@ -57,7 +57,7 @@ module Main (C : Mirage_types_lwt.CONSOLE) = struct
 
   let iperfclient c s =
     C.log_s c (Printf.sprintf "Iperf client: Sending data to server by calling vnetif.write.%!") >>= fun () ->
-    let a = Cstruct.sub (Io_page.(to_cstruct (get 1))) 0 mlen in
+    let a = Cstruct.create mlen in
     Cstruct.blit_from_string msg 0 a 0 mlen;
     let amt = total_len in
     for_lwt i = (amt / mlen) downto 1 do
