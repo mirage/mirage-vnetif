@@ -123,7 +123,7 @@ module Make = struct
         Cstruct.blit src 0 dst 0 len;
         dst
 
-    let write t id ?size fill =
+    let write t id ~size fill =
         let keys = Hashtbl.fold (fun k _v lst -> k::lst) t.listeners [] in
         let send t buf src dst =
           if src != dst then
@@ -135,9 +135,8 @@ module Make = struct
             end else
             Lwt.return_unit
         in
-        let size = match size with None -> 1514 | Some s -> s in
         let buf = Cstruct.create size in
-        let len = 14 + fill buf in
+        let len = fill buf in
         assert (len <= size) ;
         let buf = Cstruct.sub buf 0 len in
         Lwt_list.iter_s (send t buf id) keys >>= fun () ->

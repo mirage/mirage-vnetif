@@ -27,7 +27,7 @@ module type BACKEND = sig
   val register : t -> (id, Net.error) result
   val unregister : t -> id -> unit io
   val mac : t -> id -> macaddr
-  val write : t -> id -> ?size:int -> (buffer -> int) -> (unit, Net.error) result io
+  val write : t -> id -> size:int -> (buffer -> int) -> (unit, Net.error) result io
   val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
   val unregister_and_flush : t -> id -> unit io
 end

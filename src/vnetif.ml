@@ -30,7 +30,7 @@ module type BACKEND = sig
     val register : t -> (id, Net.error) result
     val unregister : t -> id -> unit io
     val mac : t -> id -> macaddr
-    val write : t -> id -> ?size:int -> (buffer -> int) -> (unit, Net.error) result io
+    val write : t -> id -> size:int -> (buffer -> int) -> (unit, Net.error) result io
     val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
     val unregister_and_flush : t -> id -> unit io
 end
@@ -51,12 +51,12 @@ module Make (B : BACKEND) = struct
   }
 
   let connect ?size_limit backend =
-      match (B.register backend) with
-      | Error _ -> Lwt.fail_with "vnetif: error while registering to backend"
-      | Ok id ->
-          let stats = { rx_bytes = 0L ; rx_pkts = 0l; tx_bytes = 0L; tx_pkts = 0l } in
-          let t = { id; size_limit; backend; stats; wake_listener=None } in
-          Lwt.return t
+    match (B.register backend) with
+    | Error _ -> Lwt.fail_with "vnetif: error while registering to backend"
+    | Ok id ->
+      let stats = { rx_bytes = 0L ; rx_pkts = 0l; tx_bytes = 0L; tx_pkts = 0l } in
+      let t = { id; size_limit; backend; stats; wake_listener=None } in
+      Lwt.return t
 
   let mtu t = match t.size_limit with None -> 1500 | Some x -> x
 
@@ -66,22 +66,17 @@ module Make (B : BACKEND) = struct
       | None -> Lwt.return_unit
       | Some e -> (Lwt.wakeup e ()); Lwt.return_unit
 
-  let write t ?size fill =
-    match
-      match t.size_limit, size with
-      | Some l, Some s when s > l -> Error `Exceeds_mtu
-      | _, Some s -> Ok s
-      | Some l, None -> Ok l
-      | None, None -> Ok (mtu t)
-    with
-    | Error e -> Lwt.return (Error e)
-    | Ok s ->
-      let size = s + 14 in
-      t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int size);
-      t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts;
-      B.write t.backend t.id ~size fill
+  let write t ~size fill =
+    let size =
+      match t.size_limit with
+      | Some l -> min size (l + 14)
+      | None -> size
+    in
+    t.stats.tx_bytes <- Int64.add t.stats.tx_bytes (Int64.of_int size);
+    t.stats.tx_pkts <- Int32.succ t.stats.tx_pkts;
+    B.write t.backend t.id ~size fill
 
-  let listen t fn =
+  let listen t ~header_size:_ fn =
     let listener t fn buf =
       t.stats.rx_bytes <- Int64.add (Int64.of_int (Cstruct.len buf)) (t.stats.rx_bytes);
       t.stats.rx_pkts <- Int32.succ t.stats.rx_pkts;
