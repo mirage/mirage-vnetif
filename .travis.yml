@@ -7,6 +7,7 @@ script: bash -ex ./.travis-docker.sh
 env:
   global:
   - PACKAGE="mirage-vnetif"
+  - EXTRA_REMOTES="https://github.com/mirage/mirage-dev.git#layering"
   matrix:
   - DISTRO="debian-testing" OCAML_VERSION="4.04"
   - DISTRO="debian-unstable" OCAML_VERSION="4.05"

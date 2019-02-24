@@ -86,7 +86,7 @@ module Main (C : Mirage_types_lwt.CONSOLE) = struct
   let iperfclient c s dest_ip dport =
     let iperftx flow =
       C.log_s c (Printf.sprintf "Iperf client: Made connection to server.%!") >>= fun () ->
-      let a = Cstruct.sub (Io_page.(to_cstruct (get 1))) 0 mlen in
+      let a = Cstruct.create mlen in
       Cstruct.blit_from_string msg 0 a 0 mlen;
       let amt = 1000000000 in
       for_lwt i = (amt / mlen) downto 1 do
