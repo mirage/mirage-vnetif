@@ -9,13 +9,13 @@ doc: "https://docs.mirage.io/mirage-vnetif"
 license: "ISC"
 
 build: [
-  ["jbuilder" "subst" "-p" name] {pinned}
-  ["jbuilder" "build" "-p" name "-j" jobs]
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
 ]
 
 depends: [
   "ocaml" {>= "4.04.2"}
-  "jbuilder"  {build & >="1.0+beta7"}
+  "dune"  {build & >= "1.0"}
   "lwt"
   "mirage-time-lwt" {>= "1.0.0"}
   "mirage-clock-lwt" {>= "1.2.0"}
