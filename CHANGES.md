@@ -1,6 +1,6 @@
 ### v0.4.2 (2019-02-24)
 
-- adjust to mirage-net 2.0.0 and mirage-protocols 2.0.0 changes
+- adjust to mirage-net 2.0.0 changes
 - port build system to dune
 
 ### v0.4.1 (2019-01-10)
