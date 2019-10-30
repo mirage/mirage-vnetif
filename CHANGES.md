@@ -1,3 +1,7 @@
+### v0.5.0 (2019-10-30)
+
+- adapt to mirage-net 3.0.0 interface changes (#28 @hannesm)
+
 ### v0.4.2 (2019-02-24)
 
 - adjust to mirage-net 2.0.0 changes
