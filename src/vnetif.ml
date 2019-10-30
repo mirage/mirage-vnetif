@@ -36,11 +36,8 @@ module type BACKEND = sig
 end
 
 module Make (B : BACKEND) = struct
-  type buffer = B.buffer
   type error = Net.error
   let pp_error = Mirage_net.Net.pp_error
-  type macaddr = B.macaddr
-  type +'a io = 'a Lwt.t
 
   type t = {
     id : B.id;
