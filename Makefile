@@ -1,24 +1,13 @@
-.PHONY: all clean
+.PHONY: all clean build test
 
-all:
-	jbuilder build
+all: build
 
 clean:
-	rm -rf _build *.install
+	dune clean
 
 test:
-	jbuilder runtest
+	dune runtest
 
-REPO=../../mirage/opam-repository
-PACKAGES=$(REPO)/packages
-# until we have https://github.com/ocaml/opam-publish/issues/38
-pkg-%:
-	topkg opam pkg -n $*
-	mkdir -p $(PACKAGES)/$*
-	cp -r _build/$*.* $(PACKAGES)/$*/
-	cd $(PACKAGES) && git add $*
-
-PKGS=$(basename $(wildcard *.opam))
-opam-pkg:
-	$(MAKE) $(PKGS:%=pkg-%)
+build:
+	dune build
 
