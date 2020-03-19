@@ -1,6 +1,6 @@
 (executables
     (names test)
-    (libraries lwt alcotest alcotest-lwt mirage-vnetif mirage-random-test))
+    (libraries lwt alcotest alcotest-lwt mirage-vnetif mirage-random-test mirage-clock-unix mirage-time-unix))
 
 (alias
     (name runtest)

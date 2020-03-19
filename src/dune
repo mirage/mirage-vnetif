@@ -6,6 +6,5 @@
  (libraries cstruct lwt lwt.unix mirage-clock ipaddr macaddr mirage-profile
    duration result mirage-time mirage-net mirage-random mirage-stack
    ethernet arp arp-mirage logs mirage-protocols tcpip.stack-direct
-   tcpip.ipv4 tcpip.icmpv4 tcpip.tcp tcpip.udp mirage-random-test
-   mirage-clock-unix mirage-time-unix
+   tcpip.ipv4 tcpip.icmpv4 tcpip.tcp tcpip.udp
    ))
