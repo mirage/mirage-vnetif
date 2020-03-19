@@ -1,0 +1,10 @@
+(executables
+    (names test)
+    (libraries lwt alcotest alcotest-lwt mirage-vnetif mirage-random-test))
+
+(alias
+    (name runtest)
+    (deps
+        (:< test.exe))
+    (action
+        (run %{<} -v -e --color=always)))
