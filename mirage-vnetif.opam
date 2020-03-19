@@ -20,12 +20,24 @@ depends: [
   "mirage-time" {>= "2.0.0"}
   "mirage-clock" {>= "3.0.0"}
   "mirage-net" {>= "3.0.0"}
+  "mirage-random"
+  "mirage-stack"
+  "mirage-time-unix"
+  "mirage-clock-unix" 
+  "tcpip"
+  "ethernet"
+  "arp"
   "cstruct" {>="2.4.0"}
   "ipaddr" {>= "3.0.0"}
   "macaddr"
   "mirage-profile"
+  "arp"
+  "arp-mirage"
   "duration"
   "logs"
+  "mirage-random-test" {with-test}
+  "alcotest" {with-test}
+  "alcotest-lwt" {with-test}
 ]
 tags: ["org:mirage"]
 synopsis: "Virtual network interface and software switch for Mirage"

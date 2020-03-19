@@ -36,5 +36,6 @@ end
 (** Dummy interface for software bridge. *)
 module Make(B : BACKEND) : sig
   include Mirage_net.S
-  val connect : ?size_limit:int -> B.t -> t Lwt.t
+  val connect : ?size_limit:int -> ?flush_on_disconnect:bool -> ?monitor_fn:(B.buffer -> unit Lwt.t) -> ?unlock_on_listen:Lwt_mutex.t -> B.t -> t Lwt.t
+  val disconnect : t -> unit Lwt.t
 end
