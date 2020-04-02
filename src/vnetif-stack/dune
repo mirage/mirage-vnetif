@@ -1,10 +1,11 @@
 (library
- (name mirage_vnetif)
- (public_name mirage-vnetif)
- (modules basic_backend vnetif vnetif_stack)
+ (name mirage_vnetif_stack)
+ (public_name mirage-vnetif-stack)
+ (modules vnetif_stack)
  (wrapped false)
  (libraries cstruct lwt lwt.unix mirage-clock ipaddr macaddr mirage-profile
    duration result mirage-time mirage-net mirage-random mirage-stack
    ethernet arp arp-mirage logs mirage-protocols tcpip.stack-direct
    tcpip.ipv4 tcpip.icmpv4 tcpip.tcp tcpip.udp
+   mirage-vnetif
    ))
