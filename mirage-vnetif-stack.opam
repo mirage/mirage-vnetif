@@ -1,0 +1,50 @@
+opam-version: "2.0"
+name: "mirage-vnetif-stack"
+maintainer: "Magnus Skjegstad <magnus@skjegstad.com>"
+authors: "Magnus Skjegstad <magnus@skjegstad.com>"
+homepage: "https://github.com/mirage/mirage-vnetif"
+bug-reports: "https://github.com/mirage/mirage-vnetif/issues/"
+dev-repo: "git+https://github.com/mirage/mirage-vnetif.git"
+doc: "https://mirage.github.io/mirage-vnetif/"
+license: "ISC"
+
+build: [
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "build" "@test/vnetif-stack/runtest" "-p" name "-j" jobs] {with-test}
+]
+
+depends: [
+  "ocaml" {>= "4.06.0"}
+  "dune"  {>= "1.0"}
+  "lwt"
+  "mirage-time" {>= "2.0.0"}
+  "mirage-clock" {>= "3.0.0"}
+  "mirage-net" {>= "3.0.0"}
+  "mirage-random"
+  "mirage-stack"
+  "mirage-vnetif" {= version}
+  "tcpip"
+  "ethernet"
+  "arp"
+  "cstruct" {>="2.4.0"}
+  "ipaddr" {>= "3.0.0"}
+  "macaddr"
+  "mirage-profile"
+  "arp"
+  "arp-mirage"
+  "duration"
+  "logs"
+  "mirage-time-unix" {with-test}
+  "mirage-clock-unix" {with-test}
+  "mirage-random-test" {with-test}
+  "alcotest" {with-test}
+  "alcotest-lwt" {with-test}
+]
+tags: ["org:mirage"]
+synopsis: "Vnetif implementation of mirage-stack for Mirage TCP/IP"
+description: """
+Provides Vnetif_stack, a mirage-stack implementation using Vnetif and the
+Mirage TCP/IP stack. The virtual stack can be used to test and record Mirage
+TCP/IP connections over a virtual network interface, as a process or VM.
+"""

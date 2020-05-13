@@ -1,6 +1,7 @@
 PKG mirage-clock-unix mirage-console mirage-net-unix mirage-unix tcpip
 PKG mirage-clock-lwt lwt io-page result ipaddr mirage-profile mirage-time-lwt
 PKG mirage-net mirage-net-lwt duration logs
+PKG mirage-stack mirage-random mirage-clock arp ethernet
 
 S src
 B _build/**

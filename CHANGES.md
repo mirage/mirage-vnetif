@@ -1,3 +1,11 @@
+### unreleased
+
+- add option for capturing packets directly on the interface
+- add option for unlocking a mutex when the interface is in listen mode
+- add package mirage-vnetif-stack to provide a preassembled ipv4 stack
+- add initial connect test for the vnetif-stack
+- clean up opam dependencies
+
 ### v0.5.0 (2019-10-30)
 
 - adapt to mirage-net 3.0.0 interface changes (#28 @hannesm)
