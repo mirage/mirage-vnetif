@@ -21,8 +21,6 @@ module Stack(B: Vnetif.BACKEND) = struct
   include V
 end
 
-let failf fmt = Fmt.kstr Alcotest.fail fmt
-
 let connect_test_lwt _ () =
   let module Backend = Basic_backend.Make in
   let module Stack = Stack(Backend) in
@@ -32,14 +30,14 @@ let connect_test_lwt _ () =
 
   let or_error name fn t =
     fn t >>= function
-    | Error e -> failf "%s: %s" name (Format.asprintf "%a" Stack.V4.TCPV4.pp_error e)
+    | Error e -> Alcotest.failf "%s: %s" name (Format.asprintf "%a" Stack.V4.TCPV4.pp_error e)
     | Ok t    -> Lwt.return t
   in
 
   let accept client_l flow expected =
     or_error "read" Stack.V4.TCPV4.read flow >>= function
-    | `Eof -> failf "eof while reading from socket"
-    | `Data data -> 
+    | `Eof -> Alcotest.failf "eof while reading from socket"
+    | `Data data ->
         let recv_str = Cstruct.to_string data in
         Alcotest.(check string) "server and client strings matched" expected recv_str;
         Lwt_mutex.unlock client_l;
@@ -60,21 +58,21 @@ let connect_test_lwt _ () =
       Lwt.pick [
           (* Cancellation timer *)
           (Time.sleep_ns (Duration.of_sec timeout_in_s) >>= fun () ->
-          failf "timeout: test timed out after %d seconds" timeout_in_s);
+          Alcotest.failf "timeout: test timed out after %d seconds" timeout_in_s);
 
           (* Server side *)
           (Stack.create_stack_ipv4 ~ip:server_ip ~unlock_on_listen:listen_l backend >>= fun s1 ->
           Stack.V4.listen_tcpv4 s1 ~port:80 (fun f -> accept accept_l f test_msg);
           Stack.V4.listen s1 >>= fun () ->
-          failf "server: listen should never exit");
+          Alcotest.failf "server: listen should never exit");
 
           (* Client side *)
           Lwt_mutex.lock listen_l >>= fun () -> (* wait for server to unlock with call to listen *)
           Stack.create_stack_ipv4 ~ip:client_ip backend >>= fun s2 ->
-          or_error "connect" (Stack.V4.TCPV4.create_connection (Stack.V4.tcpv4 s2)) (snd server_ip, 80) >>= fun flow -> 
+          or_error "connect" (Stack.V4.TCPV4.create_connection (Stack.V4.tcpv4 s2)) (snd server_ip, 80) >>= fun flow ->
           Stack.V4.TCPV4.write flow (Cstruct.of_string test_msg) >>= (function
               | Ok () -> Lwt.return_unit
-              | Error e -> failf "write: %s" (Format.asprintf "%a" Stack.V4.TCPV4.pp_write_error e))
+              | Error e -> Alcotest.failf "write: %s" (Format.asprintf "%a" Stack.V4.TCPV4.pp_write_error e))
           >>= fun () ->
           Stack.V4.TCPV4.close flow >>= fun () ->
           Lwt_mutex.lock accept_l (* wait for accept to unlock *)
@@ -84,7 +82,7 @@ let connect_test_lwt _ () =
  )
 
 let () =
-  let rand_seed = 0 in 
+  let rand_seed = 0 in
   Random.init rand_seed;
   Printf.printf "Testing with rand_seed %d\n" rand_seed;
 
