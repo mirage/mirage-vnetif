@@ -22,17 +22,14 @@ depends: [
   "mirage-clock" {>= "3.0.0"}
   "mirage-net" {>= "3.0.0"}
   "mirage-random"
-  "mirage-stack"
   "mirage-vnetif" {= version}
-  "tcpip"
+  "tcpip" {>= "7.0.0"}
   "ethernet"
-  "arp"
   "cstruct" {>="6.0.0"}
-  "ipaddr" {>= "3.0.0"}
+  "ipaddr" {>= "5.0.0"}
   "macaddr"
   "mirage-profile"
-  "arp"
-  "arp-mirage"
+  "arp" {>= "3.0.0"}
   "duration"
   "logs"
   "mirage-time-unix" {with-test}

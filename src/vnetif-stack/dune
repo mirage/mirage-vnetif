@@ -4,8 +4,7 @@
  (modules vnetif_stack)
  (wrapped false)
  (libraries cstruct lwt lwt.unix mirage-clock ipaddr macaddr mirage-profile
-   duration result mirage-time mirage-net mirage-random mirage-stack
-   ethernet arp arp-mirage logs mirage-protocols tcpip.stack-direct
-   tcpip.ipv4 tcpip.icmpv4 tcpip.tcp tcpip.udp
+   duration result mirage-time mirage-net mirage-random ethernet arp arp.mirage
+   logs tcpip.stack-direct tcpip.ipv4 tcpip.icmpv4 tcpip.tcp tcpip.udp
    mirage-vnetif
    ))

@@ -5,6 +5,8 @@
 - add package mirage-vnetif-stack to provide a preassembled ipv4 stack
 - add initial connect test for the vnetif-stack
 - clean up opam dependencies
+- drop mirage protocols and adapt to arp, ipaddr, tcpip interface
+  changes (#33 @MisterDA)
 
 ### v0.5.0 (2019-10-30)
 

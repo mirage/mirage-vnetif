@@ -44,8 +44,8 @@ let connect_test_lwt _ () =
         Lwt.return_unit
   in
 
-  let client_ip = Ipaddr.V4.Prefix.of_address_string_exn "10.0.0.10/24" in
-  let server_ip = Ipaddr.V4.Prefix.of_address_string_exn "10.0.0.11/24" in
+  let client_cidr = Ipaddr.V4.Prefix.of_string_exn "10.0.0.10/24" in
+  let server_cidr = Ipaddr.V4.Prefix.of_string_exn "10.0.0.11/24" in
 
   let timeout_in_s = 5 in
 
@@ -61,15 +61,15 @@ let connect_test_lwt _ () =
           Alcotest.failf "timeout: test timed out after %d seconds" timeout_in_s);
 
           (* Server side *)
-          (Stack.create_stack_ipv4 ~ip:server_ip ~unlock_on_listen:listen_l backend >>= fun s1 ->
-          Stack.V4.listen_tcpv4 s1 ~port:80 (fun f -> accept accept_l f test_msg);
+          (Stack.create_stack_ipv4 ~cidr:server_cidr ~unlock_on_listen:listen_l backend >>= fun s1 ->
+          Stack.V4.TCPV4.listen (Stack.V4.tcpv4 s1) ~port:80 (fun f -> accept accept_l f test_msg);
           Stack.V4.listen s1 >>= fun () ->
           Alcotest.failf "server: listen should never exit");
 
           (* Client side *)
           Lwt_mutex.lock listen_l >>= fun () -> (* wait for server to unlock with call to listen *)
-          Stack.create_stack_ipv4 ~ip:client_ip backend >>= fun s2 ->
-          or_error "connect" (Stack.V4.TCPV4.create_connection (Stack.V4.tcpv4 s2)) (snd server_ip, 80) >>= fun flow ->
+          Stack.create_stack_ipv4 ~cidr:client_cidr backend >>= fun s2 ->
+          or_error "connect" (Stack.V4.TCPV4.create_connection (Stack.V4.tcpv4 s2)) (Ipaddr.V4.Prefix.address server_cidr, 80) >>= fun flow ->
           Stack.V4.TCPV4.write flow (Cstruct.of_string test_msg) >>= (function
               | Ok () -> Lwt.return_unit
               | Error e -> Alcotest.failf "write: %s" (Format.asprintf "%a" Stack.V4.TCPV4.pp_write_error e))

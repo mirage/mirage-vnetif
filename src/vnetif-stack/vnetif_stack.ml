@@ -22,11 +22,11 @@ sig
   type buffer
   type 'a io
   type id
-  module V4 : Mirage_stack.V4
+  module V4 : Tcpip.Stack.V4
   module Backend : Vnetif.BACKEND
 
   (** Create a new IPv4 stack connected to an existing backend *)
-  val create_stack_ipv4 : ip:(Ipaddr.V4.Prefix.t * Ipaddr.V4.t) ->
+  val create_stack_ipv4 : cidr:Ipaddr.V4.Prefix.t ->
     ?gateway:Ipaddr.V4.t -> ?mtu:int -> ?monitor_fn:(buffer -> unit io) ->
     ?unlock_on_listen:Lwt_mutex.t ->
     backend -> V4.t Lwt.t
@@ -50,11 +50,11 @@ struct
   module T = Tcp.Flow.Make(Ip)(Time)(Mclock)(R)
   module V4 = Tcpip_stack_direct.Make(Time)(R)(V)(E)(A)(Ip)(Icmp)(U)(T)
 
-  let create_stack_ipv4 ~ip ?gateway ?mtu ?monitor_fn ?unlock_on_listen backend =
+  let create_stack_ipv4 ~cidr ?gateway ?mtu ?monitor_fn ?unlock_on_listen backend =
     V.connect ?size_limit:mtu ?monitor_fn ?unlock_on_listen backend >>= fun netif ->
     E.connect netif >>= fun ethif ->
     A.connect ethif >>= fun arp ->
-    Ip.connect ~ip ?gateway ethif arp >>= fun ipv4 ->
+    Ip.connect ~cidr ?gateway ethif arp >>= fun ipv4 ->
     Icmp.connect ipv4 >>= fun icmp ->
     U.connect ipv4 >>= fun udp ->
     T.connect ipv4 >>= fun tcp ->
