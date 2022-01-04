@@ -27,7 +27,7 @@ depends: [
   "tcpip"
   "ethernet"
   "arp"
-  "cstruct" {>="2.4.0"}
+  "cstruct" {>="6.0.0"}
   "ipaddr" {>= "3.0.0"}
   "macaddr"
   "mirage-profile"

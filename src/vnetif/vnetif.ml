@@ -95,7 +95,7 @@ module Make (B : BACKEND) = struct
   let listen t ~header_size:_ fn =
     (* Add counters to the listener function *)
     let listener t fn buf =
-      t.stats.rx_bytes <- Int64.add (Int64.of_int (Cstruct.len buf)) (t.stats.rx_bytes);
+      t.stats.rx_bytes <- Int64.add (Int64.of_int (Cstruct.length buf)) (t.stats.rx_bytes);
       t.stats.rx_pkts <- Int32.succ t.stats.rx_pkts;
       fn buf
     in

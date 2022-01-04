@@ -118,7 +118,7 @@ module Make = struct
         Hashtbl.replace t.listeners id fn
 
     let buffer_copy src =
-        let len = Cstruct.len src in
+        let len = Cstruct.length src in
         let dst = Cstruct.create len in
         Cstruct.blit src 0 dst 0 len;
         dst
