@@ -24,7 +24,7 @@ end
 let connect_test_lwt _ () =
   let module Backend = Basic_backend.Make in
   let module Stack = Stack(Backend) in
-  let backend = Backend.create ~use_async_readers:true ~yield:Lwt_main.yield () in
+  let backend = Backend.create ~use_async_readers:true ~yield:Lwt.pause () in
 
   let test_msg = "This is a connect test. ABCDEFGHIJKLMNOPQRSTUVWXYZ" in
 
