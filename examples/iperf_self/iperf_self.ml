@@ -129,7 +129,7 @@ module Main (C : Mirage_types_lwt.CONSOLE) = struct
           S.T.close flow >>= fun () ->
           C.log_s c "Iperf server: Done - closed connection."
       | `Ok data -> begin
-          let l = Cstruct.len data in
+          let l = Cstruct.length data in
           st.bytes <- (Int64.add st.bytes (Int64.of_int l));
           st.packets <- (Int64.add st.packets 1L);
           st.bin_bytes <- (Int64.add st.bin_bytes (Int64.of_int l));

@@ -85,7 +85,7 @@ module Main (C : Mirage_types_lwt.CONSOLE) = struct
     let enough_data, enough_data_waker = Lwt.wait () in
     Lwt.choose [
        V.listen s (fun data -> 
-            let l = Cstruct.len data in
+            let l = Cstruct.length data in
             st.bytes <- (Int64.add st.bytes (Int64.of_int l));
             st.packets <- (Int64.add st.packets 1L);
             st.bin_bytes <- (Int64.add st.bin_bytes (Int64.of_int l));

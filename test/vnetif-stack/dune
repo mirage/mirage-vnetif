@@ -1,10 +1,6 @@
-(executables
-    (names test)
-    (libraries lwt alcotest alcotest-lwt mirage-vnetif mirage-vnetif-stack mirage-random-test mirage-clock-unix mirage-time-unix))
-
-(alias
-    (name runtest)
-    (deps
-        (:< test.exe))
+(test
+    (name test)
+    (package mirage-vnetif-stack)
+    (libraries lwt alcotest alcotest-lwt mirage-vnetif mirage-vnetif-stack mirage-random-test mirage-clock-unix mirage-time-unix)
     (action
-        (run %{<} -v -e --color=always)))
+        (run %{test} -v -e --color=always)))
