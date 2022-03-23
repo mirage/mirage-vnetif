@@ -50,7 +50,7 @@ module Make (B : BACKEND) = struct
     flush_on_disconnect : bool;
   }
 
-  let connect ?size_limit ?flush_on_disconnect:(flush_on_disconnect=true) ?monitor_fn ?unlock_on_listen backend =
+  let connect ?size_limit ?flush_on_disconnect:(flush_on_disconnect=false) ?monitor_fn ?unlock_on_listen backend =
     match (B.register backend) with
     | Error _ -> Lwt.fail_with "vnetif: error while registering to backend"
     | Ok id ->

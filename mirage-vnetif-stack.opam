@@ -9,7 +9,7 @@ doc: "https://mirage.github.io/mirage-vnetif/"
 license: "ISC"
 
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   ["dune" "build" "-p" name "-j" jobs]
   ["dune" "build" "@test/vnetif-stack/runtest" "-p" name "-j" jobs] {with-test}
 ]
