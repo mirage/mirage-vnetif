@@ -17,7 +17,7 @@
 open Lwt.Infix
 
 module Stack(B: Vnetif.BACKEND) = struct
-  module V = Vnetif_stack.Vnetif_stack(B)(Mirage_crypto_rng)(Time)(Mclock)
+  module V = Vnetif_stack.Vnetif_stack(B)(Mirage_crypto_rng)(Mclock)
   include V
 end
 
@@ -57,7 +57,7 @@ let connect_test_lwt _ () =
     Lwt_mutex.with_lock listen_l (fun _ ->
       Lwt.pick [
           (* Cancellation timer *)
-          (Time.sleep_ns (Duration.of_sec timeout_in_s) >>= fun () ->
+          (Mirage_time.sleep_ns (Duration.of_sec timeout_in_s) >>= fun () ->
           Alcotest.failf "timeout: test timed out after %d seconds" timeout_in_s);
 
           (* Server side *)

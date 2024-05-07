@@ -32,7 +32,7 @@ sig
     backend -> V4V6.t Lwt.t
 end
 
-module Vnetif_stack (B : Vnetif.BACKEND)(R : Mirage_random.S)(Time : Mirage_time.S)(Mclock : Mirage_clock.MCLOCK):
+module Vnetif_stack (B : Vnetif.BACKEND)(R : Mirage_random.S)(Mclock : Mirage_clock.MCLOCK):
           Vnetif_stack with type backend = B.t =
 struct
   type backend = B.t
@@ -43,14 +43,14 @@ struct
   module Backend = B
   module V = Vnetif.Make(Backend)
   module E = Ethernet.Make(V)
-  module A = Arp.Make(E)(Time)
+  module A = Arp.Make(E)
   module Ip4 = Static_ipv4.Make(R)(Mclock)(E)(A)
   module Icmp = Icmpv4.Make(Ip4)
-  module Ip6 = Ipv6.Make(V)(E)(R)(Time)(Mclock)
+  module Ip6 = Ipv6.Make(V)(E)(R)(Mclock)
   module Ip = Tcpip_stack_direct.IPV4V6(Ip4)(Ip6)
   module U = Udp.Make(Ip)(R)
-  module T = Tcp.Flow.Make(Ip)(Time)(Mclock)(R)
-  module V4V6 = Tcpip_stack_direct.MakeV4V6(Time)(R)(V)(E)(A)(Ip)(Icmp)(U)(T)
+  module T = Tcp.Flow.Make(Ip)(Mclock)(R)
+  module V4V6 = Tcpip_stack_direct.MakeV4V6(R)(V)(E)(A)(Ip)(Icmp)(U)(T)
 
   let create_stack_ipv4 ~cidr ?gateway ?mtu ?monitor_fn ?unlock_on_listen backend =
     V.connect ?size_limit:mtu ?monitor_fn ?unlock_on_listen backend >>= fun netif ->
