@@ -17,7 +17,7 @@
 open Lwt.Infix
 
 module Stack(B: Vnetif.BACKEND) = struct
-  module V = Vnetif_stack.Vnetif_stack(B)(Mirage_random_test)(Time)(Mclock)
+  module V = Vnetif_stack.Vnetif_stack(B)(Mirage_crypto_rng)(Time)(Mclock)
   include V
 end
 
@@ -86,7 +86,7 @@ let () =
   Random.init rand_seed;
   Printf.printf "Testing with rand_seed %d\n" rand_seed;
 
-  (*Mirage_random_test.initialize();*)
+  Mirage_crypto_rng_unix.initialize (module Mirage_crypto_rng.Fortuna);
 
   Lwt_main.run @@
   Alcotest_lwt.run "mirage-vnetif" [
