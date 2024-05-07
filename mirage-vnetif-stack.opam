@@ -18,8 +18,8 @@ depends: [
   "ocaml" {>= "4.08.0"}
   "dune"  {>= "1.9"}
   "lwt"
-  "mirage-time" {>= "2.0.0"}
-  "mirage-clock" {>= "3.0.0"}
+  "mirage-time" {>= "3.0.0"}
+  "mirage-clock" {>= "4.0.0"}
   "mirage-net" {>= "3.0.0"}
   "mirage-random"
   "mirage-vnetif" {= version}
