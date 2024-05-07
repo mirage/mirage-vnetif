@@ -15,21 +15,19 @@ build: [
 ]
 
 depends: [
-  "ocaml" {>= "4.06.0"}
+  "ocaml" {>= "4.08.0"}
   "dune"  {>= "1.9"}
-  "result" {>= "1.5"}
   "lwt"
   "mirage-time" {>= "2.0.0"}
   "mirage-clock" {>= "3.0.0"}
   "mirage-net" {>= "3.0.0"}
   "mirage-random"
   "mirage-vnetif" {= version}
-  "tcpip" {>= "7.0.0"}
+  "tcpip" {>= "8.0.0"}
   "ethernet"
   "cstruct" {>="6.0.0"}
   "ipaddr" {>= "5.0.0"}
   "macaddr"
-  "mirage-profile"
   "arp" {>= "3.0.0"}
   "duration"
   "logs"
@@ -39,6 +37,7 @@ depends: [
   "alcotest" {>= "1.5.0" & with-test}
   "alcotest-lwt" {with-test}
 ]
+conflicts: [ "result" {< "1.5"} ]
 tags: ["org:mirage"]
 synopsis: "Vnetif implementation of mirage-stack for Mirage TCP/IP"
 description: """

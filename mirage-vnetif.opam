@@ -14,18 +14,17 @@ build: [
 ]
 
 depends: [
-  "ocaml" {>= "4.06.0"}
+  "ocaml" {>= "4.08.0"}
   "dune"  {>= "1.9"}
-  "result" {>= "1.5"}
   "lwt"
   "mirage-net" {>= "3.0.0"}
   "cstruct" {>="6.0.0"}
   "ipaddr" {>= "3.0.0"}
   "macaddr"
-  "mirage-profile"
   "duration"
   "logs"
 ]
+conflicts: [ "result" {< "1.5"} ]
 tags: ["org:mirage"]
 synopsis: "Virtual network interface and software switch for Mirage"
 description: """
