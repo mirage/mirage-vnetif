@@ -111,7 +111,7 @@ module Make (B : BACKEND) = struct
     | Some l -> Lwt_mutex.unlock l);
 
     (* Block until woken up by disconnect *)
-    let task, waker = MProf.Trace.named_task "Netif.listen" in
+    let task, waker = Lwt.task () in
     t.wake_on_disconnect <- (Some waker);
     task >|= fun () ->
     Ok ()
