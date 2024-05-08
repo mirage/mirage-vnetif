@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-open Lwt
+open Lwt.Infix
 
 module type Vnetif_stack =
 sig
@@ -22,14 +22,14 @@ sig
   type buffer
   type 'a io
   type id
-  module V4 : Tcpip.Stack.V4
+  module V4V6 : Tcpip.Stack.V4V6
   module Backend : Vnetif.BACKEND
 
   (** Create a new IPv4 stack connected to an existing backend *)
   val create_stack_ipv4 : cidr:Ipaddr.V4.Prefix.t ->
     ?gateway:Ipaddr.V4.t -> ?mtu:int -> ?monitor_fn:(buffer -> unit io) ->
     ?unlock_on_listen:Lwt_mutex.t ->
-    backend -> V4.t Lwt.t
+    backend -> V4V6.t Lwt.t
 end
 
 module Vnetif_stack (B : Vnetif.BACKEND)(R : Mirage_random.S)(Time : Mirage_time.S)(Mclock : Mirage_clock.MCLOCK):
@@ -44,21 +44,25 @@ struct
   module V = Vnetif.Make(Backend)
   module E = Ethernet.Make(V)
   module A = Arp.Make(E)(Time)
-  module Ip = Static_ipv4.Make(R)(Mclock)(E)(A)
-  module Icmp = Icmpv4.Make(Ip)
+  module Ip4 = Static_ipv4.Make(R)(Mclock)(E)(A)
+  module Icmp = Icmpv4.Make(Ip4)
+  module Ip6 = Ipv6.Make(V)(E)(R)(Time)(Mclock)
+  module Ip = Tcpip_stack_direct.IPV4V6(Ip4)(Ip6)
   module U = Udp.Make(Ip)(R)
   module T = Tcp.Flow.Make(Ip)(Time)(Mclock)(R)
-  module V4 = Tcpip_stack_direct.Make(Time)(R)(V)(E)(A)(Ip)(Icmp)(U)(T)
+  module V4V6 = Tcpip_stack_direct.MakeV4V6(Time)(R)(V)(E)(A)(Ip)(Icmp)(U)(T)
 
   let create_stack_ipv4 ~cidr ?gateway ?mtu ?monitor_fn ?unlock_on_listen backend =
     V.connect ?size_limit:mtu ?monitor_fn ?unlock_on_listen backend >>= fun netif ->
     E.connect netif >>= fun ethif ->
     A.connect ethif >>= fun arp ->
-    Ip.connect ~cidr ?gateway ethif arp >>= fun ipv4 ->
+    Ip4.connect ~cidr ?gateway ethif arp >>= fun ipv4 ->
     Icmp.connect ipv4 >>= fun icmp ->
-    U.connect ipv4 >>= fun udp ->
-    T.connect ipv4 >>= fun tcp ->
-    V4.connect netif ethif arp ipv4 icmp udp tcp
+    Ip6.connect ~no_init:true netif ethif >>= fun ipv6 ->
+    Ip.connect ~ipv4_only:true ~ipv6_only:false ipv4 ipv6 >>= fun ip ->
+    U.connect ip >>= fun udp ->
+    T.connect ip >>= fun tcp ->
+    V4V6.connect netif ethif arp ip icmp udp tcp
 end
 
 (*module Vnetif_stack_unix(B: Vnetif.BACKEND)(R : Mirage_random.S):

@@ -17,7 +17,7 @@
 open Lwt.Infix
 
 module Stack(B: Vnetif.BACKEND) = struct
-  module V = Vnetif_stack.Vnetif_stack(B)(Mirage_random_test)(Time)(Mclock)
+  module V = Vnetif_stack.Vnetif_stack(B)(Mirage_crypto_rng)(Time)(Mclock)
   include V
 end
 
@@ -30,12 +30,12 @@ let connect_test_lwt _ () =
 
   let or_error name fn t =
     fn t >>= function
-    | Error e -> Alcotest.failf "%s: %s" name (Format.asprintf "%a" Stack.V4.TCPV4.pp_error e)
+    | Error e -> Alcotest.failf "%s: %s" name (Format.asprintf "%a" Stack.V4V6.TCP.pp_error e)
     | Ok t    -> Lwt.return t
   in
 
   let accept client_l flow expected =
-    or_error "read" Stack.V4.TCPV4.read flow >>= function
+    or_error "read" Stack.V4V6.TCP.read flow >>= function
     | `Eof -> Alcotest.failf "eof while reading from socket"
     | `Data data ->
         let recv_str = Cstruct.to_string data in
@@ -62,19 +62,19 @@ let connect_test_lwt _ () =
 
           (* Server side *)
           (Stack.create_stack_ipv4 ~cidr:server_cidr ~unlock_on_listen:listen_l backend >>= fun s1 ->
-          Stack.V4.TCPV4.listen (Stack.V4.tcpv4 s1) ~port:80 (fun f -> accept accept_l f test_msg);
-          Stack.V4.listen s1 >>= fun () ->
+          Stack.V4V6.TCP.listen (Stack.V4V6.tcp s1) ~port:80 (fun f -> accept accept_l f test_msg);
+          Stack.V4V6.listen s1 >>= fun () ->
           Alcotest.failf "server: listen should never exit");
 
           (* Client side *)
           Lwt_mutex.lock listen_l >>= fun () -> (* wait for server to unlock with call to listen *)
           Stack.create_stack_ipv4 ~cidr:client_cidr backend >>= fun s2 ->
-          or_error "connect" (Stack.V4.TCPV4.create_connection (Stack.V4.tcpv4 s2)) (Ipaddr.V4.Prefix.address server_cidr, 80) >>= fun flow ->
-          Stack.V4.TCPV4.write flow (Cstruct.of_string test_msg) >>= (function
+          or_error "connect" (Stack.V4V6.TCP.create_connection (Stack.V4V6.tcp s2)) Ipaddr.(V4 (V4.Prefix.address server_cidr), 80) >>= fun flow ->
+          Stack.V4V6.TCP.write flow (Cstruct.of_string test_msg) >>= (function
               | Ok () -> Lwt.return_unit
-              | Error e -> Alcotest.failf "write: %s" (Format.asprintf "%a" Stack.V4.TCPV4.pp_write_error e))
+              | Error e -> Alcotest.failf "write: %s" (Format.asprintf "%a" Stack.V4V6.TCP.pp_write_error e))
           >>= fun () ->
-          Stack.V4.TCPV4.close flow >>= fun () ->
+          Stack.V4V6.TCP.close flow >>= fun () ->
           Lwt_mutex.lock accept_l (* wait for accept to unlock *)
       ]
     )
@@ -86,7 +86,7 @@ let () =
   Random.init rand_seed;
   Printf.printf "Testing with rand_seed %d\n" rand_seed;
 
-  (*Mirage_random_test.initialize();*)
+  Mirage_crypto_rng_unix.initialize (module Mirage_crypto_rng.Fortuna);
 
   Lwt_main.run @@
   Alcotest_lwt.run "mirage-vnetif" [
