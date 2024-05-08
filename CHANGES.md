@@ -1,3 +1,10 @@
+### v0.6.1 (2024-05-08)
+
+- support newer tcp releases (#35, @hannesm)
+- remove mirage-profile and result dependency (#35, @hannesm)
+- use mirage-crypto-rng instead of mirage-random-test (#35, @hannesm)
+- adapt lower bounds (#35, @hannesm)
+
 ### v0.6.0 (2022-03-22)
 
 - add option for capturing packets directly on the interface (#30, @MagnusS)
