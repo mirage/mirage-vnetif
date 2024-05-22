@@ -19,15 +19,12 @@ open Lwt.Infix
 module type Vnetif_stack =
 sig
   type backend
-  type buffer
-  type 'a io
-  type id
   module V4V6 : Tcpip.Stack.V4V6
   module Backend : Vnetif.BACKEND
 
   (** Create a new IPv4 stack connected to an existing backend *)
   val create_stack_ipv4 : cidr:Ipaddr.V4.Prefix.t ->
-    ?gateway:Ipaddr.V4.t -> ?mtu:int -> ?monitor_fn:(buffer -> unit io) ->
+    ?gateway:Ipaddr.V4.t -> ?mtu:int -> ?monitor_fn:(Cstruct.t -> unit Lwt.t) ->
     ?unlock_on_listen:Lwt_mutex.t ->
     backend -> V4V6.t Lwt.t
 end
@@ -36,9 +33,6 @@ module Vnetif_stack (B : Vnetif.BACKEND)(R : Mirage_random.S)(Time : Mirage_time
           Vnetif_stack with type backend = B.t =
 struct
   type backend = B.t
-  type buffer = B.buffer
-  type 'a io = 'a B.io
-  type id = B.id
 
   module Backend = B
   module V = Vnetif.Make(Backend)
