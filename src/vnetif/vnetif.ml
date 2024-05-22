@@ -21,18 +21,14 @@ let src = Logs.Src.create "vnetif" ~doc:"in-memory network interface"
 module Log = (val Logs.src_log src : Logs.LOG)
 
 module type BACKEND = sig
-    type 'a io = 'a Lwt.t
-    type buffer = Cstruct.t
-    type id = int
-    type macaddr = Macaddr.t
     type t
 
-    val register : t -> (id, Net.error) result
-    val unregister : t -> id -> unit io
-    val mac : t -> id -> macaddr
-    val write : t -> id -> size:int -> (buffer -> int) -> (unit, Net.error) result io
-    val set_listen_fn : t -> id -> (buffer -> unit io) -> unit
-    val unregister_and_flush : t -> id -> unit io
+    val register : t -> (int, Net.error) result
+    val unregister : t -> int -> unit Lwt.t
+    val mac : t -> int -> Macaddr.t
+    val write : t -> int -> size:int -> (Cstruct.t -> int) -> (unit, Net.error) result Lwt.t
+    val set_listen_fn : t -> int -> (Cstruct.t -> unit Lwt.t) -> unit
+    val unregister_and_flush : t -> int -> unit Lwt.t
 end
 
 module Make (B : BACKEND) = struct
@@ -40,13 +36,13 @@ module Make (B : BACKEND) = struct
   let pp_error = Mirage_net.Net.pp_error
 
   type t = {
-    id : B.id;
+    id : int;
     backend : B.t;
     mutable wake_on_disconnect : unit Lwt.u option; (* woken up when disconnect is called, used by listen *)
     unlock_on_listen: Lwt_mutex.t option; (* unlocked when listen is called, used by tests *)
     size_limit : int option;
     stats : stats;
-    monitor_fn : (B.buffer -> unit Lwt.t) option;
+    monitor_fn : (Cstruct.t -> unit Lwt.t) option;
     flush_on_disconnect : bool;
   }
 
