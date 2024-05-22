@@ -1,3 +1,8 @@
+### v0.6.2 (2024-05-22)
+
+- fewer type aliases, 'a io is Lwt.t, buffer is Cstruct.t, id is int
+  (#37 @hannesm)
+
 ### v0.6.1 (2024-05-08)
 
 - support newer tcp releases (#35, @hannesm)
