@@ -12,7 +12,7 @@ opam install mirage-vnetif
 
 ## Getting started
 
-First, construct a TCP/IP stack based on `vnetif`: 
+First, construct a TCP/IP stack based on `vnetif`:
 
 ```ocaml
   module S = struct
@@ -34,7 +34,7 @@ let or_error name fn t =
     fn t
     >>= function
         | `Error e -> fail (Failure ("Error starting " ^ name))
-        | `Ok t -> return t 
+        | `Ok t -> return t
 
 let create_stack c backend ip netmask gw =
     or_error "backend" S.V.connect backend >>= fun netif ->
@@ -44,7 +44,7 @@ let create_stack c backend ip netmask gw =
     or_error "tcpv4" S.T.connect ipv4 >>= fun tcpv4 ->
     let config = {
         Mirage_types_lwt.name = "stack";
-        Mirage_types_lwt.console = c; 
+        Mirage_types_lwt.console = c;
         Mirage_types_lwt.interface = netif;
         Mirage_types_lwt.mode = `IPv4 (ip, netmask, gw);
     } in
@@ -54,7 +54,7 @@ let create_stack c backend ip netmask gw =
 
 
 We can now create multiple stacks that talk over the same backend. `Basic_backend.create` accepts two optional parameters:
-- `use_async_readers` makes the `write` calls non-blocking. This is necessary to use Vnetif with the Mirage TCP/IP stack. 
+- `use_async_readers` makes the `write` calls non-blocking. This is necessary to use Vnetif with the Mirage TCP/IP stack.
 - `yield` specifies the yield function to use in non-blocking mode. In a unikernel this is typically `OS.Time.sleep 0.0`, but in a Unix process `Lwt_main.yield ()` can be used instead.
 
 ```ocaml
@@ -62,7 +62,7 @@ We can now create multiple stacks that talk over the same backend. `Basic_backen
 let () =
 
     (* create async backend with OS.Time.sleep 0.0 as yield *)
-    let backend = Basic_backend.create ~use_async_readers:true 
+    let backend = Basic_backend.create ~use_async_readers:true
         ~yield:(fun() -> OS.Time.sleep 0.0 ) () in
 
     let netmask = Ipaddr.V4.of_string_exn "255.255.255.0"  in
@@ -75,7 +75,7 @@ let () =
     create_stack c backend server_ip netmask [gw] >>= fun client_stack ->
 ```
 
-The stacks can now be used as regular Mirage TCP/IP stacks, e.g.: 
+The stacks can now be used as regular Mirage TCP/IP stacks, e.g.:
 
 ```ocaml
 S.listen_tcpv4 server_stack ~port:80 (fun f -> ...);
@@ -86,4 +86,14 @@ S.listen s1
 ```
 mirage configure --xen/--unix
 make
+```
+
+## Releasing mirage-vnetif
+
+Please ensure that tcpip works with your proposed changes and release:
+
+```
+git clone https://github.com/mirage/mirage-tcpip.git
+cd mirage-tcpip ; ln -s ../mirage-vnetif .
+cd mirage-tcpip ; dune runtest
 ```
