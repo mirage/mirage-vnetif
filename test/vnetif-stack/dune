@@ -1,6 +1,0 @@
-(test
-    (name test)
-    (package mirage-vnetif-stack)
-    (libraries lwt alcotest alcotest-lwt mirage-vnetif mirage-vnetif-stack mirage-crypto-rng mirage-crypto-rng.unix mirage-clock-unix mirage-time-unix)
-    (action
-        (run %{test} -v -e --color=always)))
