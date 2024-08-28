@@ -16,9 +16,34 @@
 
 open Lwt.Infix
 
+module R = Mirage_crypto_rng_mirage.Make(Time)(Mclock)
+
 module Stack(B: Vnetif.BACKEND) = struct
-  module V = Vnetif_stack.Vnetif_stack(B)(Mirage_crypto_rng)(Time)(Mclock)
-  include V
+  type backend = B.t
+
+  module Backend = B
+  module V = Vnetif.Make(Backend)
+  module E = Ethernet.Make(V)
+  module A = Arp.Make(E)(Time)
+  module Ip4 = Static_ipv4.Make(R)(Mclock)(E)(A)
+  module Icmp = Icmpv4.Make(Ip4)
+  module Ip6 = Ipv6.Make(V)(E)(R)(Time)(Mclock)
+  module Ip = Tcpip_stack_direct.IPV4V6(Ip4)(Ip6)
+  module U = Udp.Make(Ip)(R)
+  module T = Tcp.Flow.Make(Ip)(Time)(Mclock)(R)
+  module V4V6 = Tcpip_stack_direct.MakeV4V6(Time)(R)(V)(E)(A)(Ip)(Icmp)(U)(T)
+
+  let create_stack_ipv4 ~cidr ?gateway ?mtu ?monitor_fn ?unlock_on_listen backend =
+    V.connect ?size_limit:mtu ?monitor_fn ?unlock_on_listen backend >>= fun netif ->
+    E.connect netif >>= fun ethif ->
+    A.connect ethif >>= fun arp ->
+    Ip4.connect ~cidr ?gateway ethif arp >>= fun ipv4 ->
+    Icmp.connect ipv4 >>= fun icmp ->
+    Ip6.connect ~no_init:true netif ethif >>= fun ipv6 ->
+    Ip.connect ~ipv4_only:true ~ipv6_only:false ipv4 ipv6 >>= fun ip ->
+    U.connect ip >>= fun udp ->
+    T.connect ip >>= fun tcp ->
+    V4V6.connect netif ethif arp ip icmp udp tcp
 end
 
 let connect_test_lwt _ () =
@@ -82,15 +107,10 @@ let connect_test_lwt _ () =
  )
 
 let () =
-  let rand_seed = 0 in
-  Random.init rand_seed;
-  Printf.printf "Testing with rand_seed %d\n" rand_seed;
-
-  Mirage_crypto_rng_unix.initialize (module Mirage_crypto_rng.Fortuna);
-
-  Lwt_main.run @@
-  Alcotest_lwt.run "mirage-vnetif" [
+  Lwt_main.run (
+    R.initialize (module Mirage_crypto_rng.Fortuna) >>= fun () ->
+    Alcotest_lwt.run "mirage-vnetif" [
       ("stack.v4",
-          [ Alcotest_lwt.test_case "connect" `Quick connect_test_lwt ]
+       [ Alcotest_lwt.test_case "connect" `Quick connect_test_lwt ]
       )
-  ]
+    ])
