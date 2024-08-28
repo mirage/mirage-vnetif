@@ -1,5 +1,0 @@
-(test
-    (name test)
-    (libraries lwt alcotest alcotest-lwt mirage-vnetif mirage-crypto-rng-mirage
-      mirage-crypto-rng mirage-clock-unix mirage-time-unix ethernet arp.mirage
-      tcpip.ipv4 tcpip.icmpv4 tcpip.ipv6 tcpip.stack-direct))
