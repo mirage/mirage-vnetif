@@ -33,3 +33,4 @@ Provides the module `Vnetif` which can be used as a replacement for the regular
 connected to a software switch that allows the stacks to communicate as if they
 were connected to the same LAN.
 """
+x-maintenance-intent: [ "(latest)" ]
